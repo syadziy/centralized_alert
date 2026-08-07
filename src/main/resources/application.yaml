@@ -96,12 +96,14 @@ spring:
       auto-offset-reset: earliest
       enable-auto-commit: false
 
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
 
       properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.trusted.packages: ${KAFKA_TRUSTED_PACKAGES:com.mac.alert}
-        spring.json.use.type.headers: false
+        spring.json.use.type.headers: true
         spring.json.value.default.type: com.mac.alert.entities.dto.CreateAlertEvent
 
     listener:
@@ -212,6 +214,9 @@ alert:
     topic: ${ALERT_KAFKA_TOPIC:centralized-alert.requested}
     create-topic: ${ALERT_KAFKA_CREATE_TOPIC:centralized-alert.create}
     dead-letter-topic: ${ALERT_KAFKA_DLT_TOPIC:centralized-alert.requested.dlt}
+    error-handling:
+      retry-interval-ms: ${ALERT_KAFKA_RETRY_INTERVAL_MS:1000}
+      max-retries: ${ALERT_KAFKA_MAX_RETRIES:2}
 
   attachment:
     storage-type: ${ATTACHMENT_STORAGE_TYPE:LOCAL}

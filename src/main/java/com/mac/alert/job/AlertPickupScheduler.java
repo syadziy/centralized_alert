@@ -3,6 +3,7 @@ package com.mac.alert.job;
 import com.mac.alert.entities.constant.TriggerSource;
 import com.mac.alert.entities.constant.AlertLogFields;
 import com.mac.alert.service.AlertDispatchService;
+import com.mac.alert.utils.handler.AsyncExceptionHandler;
 import com.mac.sdk_util.entities.constant.LogFields;
 import com.mac.sdk_util.utils.StructuredLog;
 
@@ -30,12 +31,15 @@ public class AlertPickupScheduler {
             );
 
     private final AlertDispatchService alertDispatchService;
+    private final AsyncExceptionHandler exceptionHandler;
 
     public AlertPickupScheduler(
-            AlertDispatchService alertDispatchService
+            AlertDispatchService alertDispatchService,
+            AsyncExceptionHandler exceptionHandler
     ) {
         this.alertDispatchService =
                 alertDispatchService;
+        this.exceptionHandler = exceptionHandler;
     }
 
     @Scheduled(
@@ -68,13 +72,12 @@ public class AlertPickupScheduler {
                     AlertLogFields.TRIGGER_SOURCE, TriggerSource.SCHEDULER.name()));
 
         } catch (Exception exception) {
-            StructuredLog.error(
-                    LOGGER,
-                    "Alert scheduler execution failed",
+            exceptionHandler.handle(
+                    null,
+                    "centralized-alert.scheduler",
+                    "scheduler",
+                    "pickupPendingAlerts",
                     Map.of(
-                            LogFields.EVENT_ACTION, "pickupPendingAlerts",
-                            LogFields.EVENT_OUTCOME, LogFields.OUTCOME_FAILURE,
-                            LogFields.EVENT_DATASET, "centralized-alert.scheduler",
                             AlertLogFields.TRIGGER_SOURCE, TriggerSource.SCHEDULER.name()),
                     exception);
         }

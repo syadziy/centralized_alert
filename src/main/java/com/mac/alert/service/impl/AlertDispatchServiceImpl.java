@@ -23,6 +23,7 @@ import com.mac.alert.service.EmailService;
 import com.mac.alert.utils.FailureClassifier;
 import com.mac.alert.utils.RetryDelayCalculator;
 import com.mac.alert.utils.WorkerIdentity;
+import com.mac.alert.utils.handler.AsyncExceptionHandler;
 import com.mac.sdk_util.entities.constant.LogFields;
 import com.mac.sdk_util.utils.StructuredLog;
 
@@ -49,6 +50,7 @@ public class AlertDispatchServiceImpl
     private final WorkerIdentity workerIdentity;
     private final Clock clock;
     private final ExecutorService alertExecutor;
+    private final AsyncExceptionHandler exceptionHandler;
 
     public AlertDispatchServiceImpl(
             AlertRepository alertRepository,
@@ -60,7 +62,8 @@ public class AlertDispatchServiceImpl
             WorkerIdentity workerIdentity,
             Clock clock,
             @Qualifier("alertVirtualThreadExecutor")
-            ExecutorService alertExecutor
+            ExecutorService alertExecutor,
+            AsyncExceptionHandler exceptionHandler
     ) {
         this.alertRepository = alertRepository;
         this.emailService = emailService;
@@ -71,6 +74,7 @@ public class AlertDispatchServiceImpl
         this.workerIdentity = workerIdentity;
         this.clock = clock;
         this.alertExecutor = alertExecutor;
+        this.exceptionHandler = exceptionHandler;
     }
 
     @Override
@@ -256,12 +260,29 @@ public class AlertDispatchServiceImpl
         taskContext.put(LogFields.EVENT_DATASET, "centralized-alert.delivery");
 
         return () -> {
-            StructuredLog.withMdc(
-                    taskContext,
-                    () -> processAlert(
-                            claimedAlert,
-                            triggerSource,
-                            workerId));
+            try {
+                StructuredLog.withMdc(
+                        taskContext,
+                        () -> processAlert(
+                                claimedAlert,
+                                triggerSource,
+                                workerId));
+            } catch (Throwable exception) {
+                exceptionHandler.handle(
+                        taskContext.get(LogFields.TRACE_ID),
+                        "centralized-alert.delivery",
+                        "virtual-thread",
+                        "processAlertTask",
+                        Map.of(
+                                AlertLogFields.ALERT_ID, claimedAlert.alertId(),
+                                AlertLogFields.ALERT_ATTEMPT, claimedAlert.attemptNo(),
+                                AlertLogFields.TRIGGER_SOURCE, triggerSource.name()),
+                        exception);
+                if (exception instanceof Error error) {
+                    throw error;
+                }
+                throw (Exception) exception;
+            }
 
             return null;
         };
@@ -290,14 +311,7 @@ public class AlertDispatchServiceImpl
                 * ditangani processAlert() dan dicatat ke
                 * delivery history.
                 */
-                StructuredLog.error(
-                        LOGGER,
-                        "Unexpected virtual-thread task failure",
-                        Map.of(
-                                LogFields.EVENT_ACTION, "processAlertTask",
-                                LogFields.EVENT_OUTCOME, LogFields.OUTCOME_FAILURE,
-                                LogFields.EVENT_DATASET, "centralized-alert.delivery"),
-                        exception.getCause());
+                // The task reports its own failure with the task MDC before propagating it.
             }
         }
     }
