@@ -251,12 +251,17 @@ public class AlertDispatchServiceImpl
             TriggerSource triggerSource,
             String workerId
     ) {
+        Map<String, String> taskContext = StructuredLog.copyMdc();
+        taskContext.putIfAbsent(LogFields.TRACE_ID, UUID.randomUUID().toString());
+        taskContext.put(LogFields.EVENT_DATASET, "centralized-alert.delivery");
+
         return () -> {
-            processAlert(
-                    claimedAlert,
-                    triggerSource,
-                    workerId
-            );
+            StructuredLog.withMdc(
+                    taskContext,
+                    () -> processAlert(
+                            claimedAlert,
+                            triggerSource,
+                            workerId));
 
             return null;
         };

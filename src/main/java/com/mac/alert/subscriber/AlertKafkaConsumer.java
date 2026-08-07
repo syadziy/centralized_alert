@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.mac.alert.entities.constant.TriggerSource;
@@ -55,6 +56,17 @@ public class AlertKafkaConsumer {
 
     @KafkaListener(topics = "${alert.kafka.topic}", groupId = "${spring.kafka.consumer.group-id}")
     public void consume(AlertEventRequested event) {
+        String traceId = event.alertId() == null
+                ? UUID.randomUUID().toString()
+                : event.alertId().toString();
+        StructuredLog.withMdc(
+                Map.of(
+                        LogFields.TRACE_ID, traceId,
+                        LogFields.EVENT_DATASET, "centralized-alert.kafka"),
+                () -> processDispatchEvent(event));
+    }
+
+    private void processDispatchEvent(AlertEventRequested event) {
         boolean accepted = alertDispatchService.dispatchAlertById(
                 event.alertId(),
                 TriggerSource.KAFKA);
@@ -73,6 +85,15 @@ public class AlertKafkaConsumer {
     public void consume(
             CreateAlertEvent event,
             @Header(name = KafkaHeaders.RECEIVED_KEY, required = false) String kafkaKey) {
+        String traceId = resolveTraceId(kafkaKey, event.eventId());
+        StructuredLog.withMdc(
+                Map.of(
+                        LogFields.TRACE_ID, traceId,
+                        LogFields.EVENT_DATASET, "centralized-alert.kafka"),
+                () -> processCreateEvent(event, kafkaKey));
+    }
+
+    private void processCreateEvent(CreateAlertEvent event, String kafkaKey) {
         validate(event);
 
         var command = alertMapper.toCommand(
@@ -96,6 +117,16 @@ public class AlertKafkaConsumer {
         }
 
         StructuredLog.info(LOGGER, "Create alert event processed", fields);
+    }
+
+    private String resolveTraceId(String kafkaKey, String eventId) {
+        if (kafkaKey != null && !kafkaKey.isBlank()) {
+            return kafkaKey;
+        }
+        if (eventId != null && !eventId.isBlank()) {
+            return eventId;
+        }
+        return UUID.randomUUID().toString();
     }
 
     private void validate(

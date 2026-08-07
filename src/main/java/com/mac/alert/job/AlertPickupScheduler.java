@@ -7,6 +7,7 @@ import com.mac.sdk_util.entities.constant.LogFields;
 import com.mac.sdk_util.utils.StructuredLog;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,14 @@ public class AlertPickupScheduler {
             "${alert.pickup.initial-delay:PT10S}"
     )
     public void pickupPendingAlerts() {
+        StructuredLog.withMdc(
+                Map.of(
+                        LogFields.TRACE_ID, UUID.randomUUID().toString(),
+                        LogFields.EVENT_DATASET, "centralized-alert.scheduler"),
+                this::executePickup);
+    }
+
+    private void executePickup() {
         try {
             int processed =
                     alertDispatchService
