@@ -16,25 +16,25 @@ public record AlertProcessingProperties(
                 || processingTimeout.isNegative()
                 || processingTimeout.isZero()) {
             throw new IllegalArgumentException(
-                    "alert.processing.processing-timeout tidak boleh negatif");
+                    "alert.processing.processing-timeout must not be negative");
         }
 
         if (retryInitialDelay == null
                 || retryInitialDelay.isNegative()
                 || retryInitialDelay.isZero()) {
             throw new IllegalArgumentException(
-                    "alert.processing.retry-initial-delay tidak boleh negatif");
+                    "alert.processing.retry-initial-delay must not be negative");
         }
 
         if (retryMaxDelay == null
                 || retryMaxDelay.compareTo(retryInitialDelay) < 0) {
             throw new IllegalArgumentException(
-                    "retry-max-delay harus lebih besar atau sama dengan retry-initial-delay");
+                    "retry-max-delay must be greater than or equal to retry-initial-delay");
         }
 
         if (maxParallelism <= 0) {
             throw new IllegalArgumentException(
-                    "max-parallelism harus lebih dari 0");
+                    "max-parallelism must be greater than 0");
         }
     }
 }

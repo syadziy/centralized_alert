@@ -429,7 +429,7 @@ public class AlertRepositoryImpl implements AlertRepository {
                     value == null ? Map.of() : value);
 
         } catch (JacksonException exception) {
-            throw new IllegalArgumentException(
+            throw new IllegalStateException(
                     "templateVariables cannot convert to JSON",
                     exception);
         }
@@ -489,7 +489,7 @@ public class AlertRepositoryImpl implements AlertRepository {
         } catch (JsonProcessingException exception) {
             throw new AlertDeliveryException(
                     AlertErrorCode.TEMPLATE_RENDER_FAILED,
-                    "Format template_variables not valid",
+                    "Invalid template_variables format",
                     exception);
         }
     }

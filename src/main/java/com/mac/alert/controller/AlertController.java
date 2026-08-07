@@ -56,14 +56,14 @@ public class AlertController {
                     new ManualDispatchResponse(
                             alertId,
                             false,
-                            "Alert tidak dapat diproses karena bukan berstatus PENDING atau RETRY"));
+                            "Alert cannot be processed because its status is neither PENDING nor RETRY"));
         }
 
         return ResponseHelper.httpAccepted(
                 new ManualDispatchResponse(
                         alertId,
                         true,
-                        "Alert berhasil diproses"));
+                        "Alert processed successfully"));
     }
 
     @PostMapping("/alert")
@@ -82,8 +82,8 @@ public class AlertController {
                 result.created(),
                 result.createdAt(),
                 result.created()
-                        ? "Alert berhasil dibuat"
-                        : "Alert dengan idempotency key yang sama sudah tersedia");
+                        ? "Alert created successfully"
+                        : "An alert with the same idempotency key already exists");
 
         if (!result.created()) {
             return ResponseHelper.httpOK(response);

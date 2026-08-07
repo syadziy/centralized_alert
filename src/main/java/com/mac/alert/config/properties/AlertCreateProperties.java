@@ -10,12 +10,12 @@ public record AlertCreateProperties(
     public AlertCreateProperties {
         if (defaultMaxRetry < 0) {
             throw new IllegalArgumentException(
-                    "alert.create.default-max-retry tidak boleh negatif");
+                    "alert.create.default-max-retry must not be negative");
         }
 
         if (defaultPriority < 1 || defaultPriority > 9) {
             throw new IllegalArgumentException(
-                    "alert.create.default-priority harus antara 1 dan 9");
+                    "alert.create.default-priority must be between 1 and 9");
         }
     }
 }

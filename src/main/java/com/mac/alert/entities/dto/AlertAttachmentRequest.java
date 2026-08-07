@@ -30,7 +30,7 @@ public record AlertAttachmentRequest(
 
         @Pattern(
             regexp = "^[a-fA-F0-9]{64}$",
-            message = "checksumSha256 harus berupa SHA-256 hexadecimal"
+            message = "checksumSha256 must be a hexadecimal SHA-256 value"
         )
         String checksumSha256,
 

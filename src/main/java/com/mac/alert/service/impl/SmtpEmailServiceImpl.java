@@ -228,7 +228,7 @@ public class SmtpEmailServiceImpl implements EmailService {
         validateAddress(
                 sender,
                 AlertErrorCode.INVALID_SENDER,
-                "Sender email tidak valid"
+                "Invalid sender email"
         );
     }
 
@@ -244,7 +244,7 @@ public class SmtpEmailServiceImpl implements EmailService {
         validateAddress(
                 recipient,
                 AlertErrorCode.INVALID_RECIPIENT,
-                "Recipient email tidak valid"
+                "Invalid recipient email"
         );
     }
 

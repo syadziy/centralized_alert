@@ -8,6 +8,13 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
+  web:
+    locale: en
+    locale-resolver: fixed
+
+  messages:
+    fallback-to-system-locale: false
+
   # =========================
   # DATABASE
   # =========================

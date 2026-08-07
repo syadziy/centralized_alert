@@ -20,25 +20,25 @@ public record AlertAttachment(
     public AlertAttachment {
         if (id == null) {
             throw new IllegalArgumentException(
-                    "Attachment ID tidak boleh null"
+                    "Attachment ID must not be null"
             );
         }
 
         if (fileName == null || fileName.isBlank()) {
             throw new IllegalArgumentException(
-                    "Attachment filename tidak boleh kosong"
+                    "Attachment filename must not be blank"
             );
         }
 
         if (storageKey == null || storageKey.isBlank()) {
             throw new IllegalArgumentException(
-                    "Attachment storage key tidak boleh kosong"
+                    "Attachment storage key must not be blank"
             );
         }
 
         if (fileSizeBytes < 0) {
             throw new IllegalArgumentException(
-                    "Attachment size tidak boleh negatif"
+                    "Attachment size must not be negative"
             );
         }
     }

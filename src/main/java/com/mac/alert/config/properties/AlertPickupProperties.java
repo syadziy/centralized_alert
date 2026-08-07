@@ -14,7 +14,7 @@ public record AlertPickupProperties(
     public AlertPickupProperties {
         if (batchSize <= 0) {
             throw new IllegalArgumentException(
-                    "alert.pickup.batch-size harus lebih dari 0");
+                    "alert.pickup.batch-size must be greater than 0");
         }
     }
 }

@@ -101,7 +101,7 @@ public class AlertCreateServiceImpl
 
         if (!hasToRecipient) {
             throw new IllegalArgumentException(
-                    "Alert must have minimum 1 recipient TO"
+                    "Alert must have at least one TO recipient"
             );
         }
 
@@ -114,7 +114,7 @@ public class AlertCreateServiceImpl
 
             if (!uniqueRecipients.add(key)) {
                 throw new IllegalArgumentException(
-                        "Recipient duplicate with key: " + key
+                        "Duplicate recipient with key: " + key
                 );
             }
         }
@@ -128,7 +128,7 @@ public class AlertCreateServiceImpl
                     )) {
 
                 throw new IllegalArgumentException(
-                        "contentId must be inline attachment: "
+                        "contentId is required for inline attachment: "
                                 + attachment.fileName()
                 );
             }

@@ -36,7 +36,7 @@ public record AlertMessage(
 
         if (to.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Alert harus memiliki minimal satu recipient TO"
+                    "Alert must have at least one TO recipient"
             );
         }
     }
