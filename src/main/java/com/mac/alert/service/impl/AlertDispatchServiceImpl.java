@@ -2,7 +2,9 @@ package com.mac.alert.service.impl;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -11,6 +13,7 @@ import java.util.concurrent.Future;
 
 import com.mac.alert.config.properties.AlertPickupProperties;
 import com.mac.alert.config.properties.AlertProcessingProperties;
+import com.mac.alert.entities.constant.AlertLogFields;
 import com.mac.alert.entities.constant.TriggerSource;
 import com.mac.alert.entities.model.ClaimedAlert;
 import com.mac.alert.entities.model.DeliveryFailure;
@@ -20,6 +23,8 @@ import com.mac.alert.service.EmailService;
 import com.mac.alert.utils.FailureClassifier;
 import com.mac.alert.utils.RetryDelayCalculator;
 import com.mac.alert.utils.WorkerIdentity;
+import com.mac.sdk_util.entities.constant.LogFields;
+import com.mac.sdk_util.utils.StructuredLog;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,13 +125,14 @@ public class AlertDispatchServiceImpl
             }
         }
 
-        LOGGER.info(
-                "Alert dispatch completed. "
-                        + "processed={}, batchSize={}, parallelism={}",
-                totalProcessed,
-                maximumBatchSize,
-                maximumParallelism
-        );
+        StructuredLog.info(LOGGER, "Alert dispatch completed", Map.of(
+                LogFields.EVENT_ACTION, "dispatchPendingAlerts",
+                LogFields.EVENT_OUTCOME, LogFields.OUTCOME_SUCCESS,
+                LogFields.EVENT_DATASET, "centralized-alert.delivery",
+                AlertLogFields.ALERT_PROCESSED_COUNT, totalProcessed,
+                AlertLogFields.ALERT_BATCH_SIZE, maximumBatchSize,
+                AlertLogFields.ALERT_PARALLELISM, maximumParallelism,
+                AlertLogFields.TRIGGER_SOURCE, triggerSource.name()));
 
         return totalProcessed;
     }
@@ -220,11 +226,14 @@ public class AlertDispatchServiceImpl
                     completedAt
             );
 
-            LOGGER.info(
-                    "Alert sent successfully. alertId={}, attemptNo={}",
-                    claimedAlert.alertId(),
-                    claimedAlert.attemptNo()
-            );
+            StructuredLog.info(LOGGER, "Alert sent successfully", Map.of(
+                    LogFields.EVENT_ACTION, "sendAlert",
+                    LogFields.EVENT_OUTCOME, LogFields.OUTCOME_SUCCESS,
+                    LogFields.EVENT_DATASET, "centralized-alert.delivery",
+                    AlertLogFields.ALERT_ID, claimedAlert.alertId(),
+                    AlertLogFields.ALERT_ATTEMPT, claimedAlert.attemptNo(),
+                    AlertLogFields.ALERT_STATUS, "SENT",
+                    AlertLogFields.TRIGGER_SOURCE, triggerSource.name()));
 
         } catch (Exception exception) {
             handleFailure(
@@ -276,10 +285,14 @@ public class AlertDispatchServiceImpl
                 * ditangani processAlert() dan dicatat ke
                 * delivery history.
                 */
-                LOGGER.error(
+                StructuredLog.error(
+                        LOGGER,
                         "Unexpected virtual-thread task failure",
-                        exception.getCause()
-                );
+                        Map.of(
+                                LogFields.EVENT_ACTION, "processAlertTask",
+                                LogFields.EVENT_OUTCOME, LogFields.OUTCOME_FAILURE,
+                                LogFields.EVENT_DATASET, "centralized-alert.delivery"),
+                        exception.getCause());
             }
         }
     }
@@ -332,13 +345,19 @@ public class AlertDispatchServiceImpl
                 completedAt
         );
 
-        LOGGER.error(
-                "Alert delivery failed. alertId={}, status={}, errorCode={}, nextRetryAt={}",
-                claimedAlert.alertId(),
-                targetStatus,
-                failure.errorCode(),
-                nextRetryAt,
-                exception
-        );
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put(LogFields.EVENT_ACTION, "sendAlert");
+        fields.put(LogFields.EVENT_OUTCOME, LogFields.OUTCOME_FAILURE);
+        fields.put(LogFields.EVENT_DATASET, "centralized-alert.delivery");
+        fields.put(AlertLogFields.ALERT_ID, claimedAlert.alertId());
+        fields.put(AlertLogFields.ALERT_ATTEMPT, claimedAlert.attemptNo());
+        fields.put(AlertLogFields.ALERT_STATUS, targetStatus);
+        fields.put(AlertLogFields.ALERT_ERROR_CODE, failure.errorCode());
+        fields.put(AlertLogFields.TRIGGER_SOURCE, triggerSource.name());
+        if (nextRetryAt != null) {
+            fields.put(AlertLogFields.ALERT_NEXT_RETRY_AT, nextRetryAt);
+        }
+
+        StructuredLog.error(LOGGER, "Alert delivery failed", fields, exception);
     }
 }

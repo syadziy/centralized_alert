@@ -1,16 +1,21 @@
 package com.mac.alert.subscriber;
 
 import java.time.Clock;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.mac.alert.entities.constant.TriggerSource;
+import com.mac.alert.entities.constant.AlertLogFields;
 import com.mac.alert.entities.dto.AlertEventRequested;
 import com.mac.alert.entities.constant.AlertCreatedSource;
 import com.mac.alert.entities.dto.CreateAlertEvent;
 import com.mac.alert.entities.mapper.AlertMapper;
 import com.mac.alert.service.AlertCreateService;
 import com.mac.alert.service.AlertDispatchService;
+import com.mac.sdk_util.entities.constant.LogFields;
+import com.mac.sdk_util.utils.StructuredLog;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -55,9 +60,12 @@ public class AlertKafkaConsumer {
                 TriggerSource.KAFKA);
 
         if (!accepted) {
-            LOGGER.warn(
-                    "Kafka alert was not dispatched. alertId={}",
-                    event.alertId());
+            StructuredLog.warn(LOGGER, "Kafka alert was not dispatched", Map.of(
+                    LogFields.EVENT_ACTION, "dispatchAlert",
+                    LogFields.EVENT_OUTCOME, LogFields.OUTCOME_FAILURE,
+                    LogFields.EVENT_DATASET, "centralized-alert.kafka",
+                    AlertLogFields.ALERT_ID, event.alertId(),
+                    AlertLogFields.TRIGGER_SOURCE, TriggerSource.KAFKA.name()));
         }
     }
 
@@ -74,17 +82,20 @@ public class AlertKafkaConsumer {
 
         var result = alertCreateService.create(command);
 
-        LOGGER.info(
-                """
-                        Create alert event processed. \
-                        eventId={}, kafkaKey={}, alertId={}, \
-                        created={}, status={}
-                        """,
-                event.eventId(),
-                kafkaKey,
-                result.alertId(),
-                result.created(),
-                result.status());
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put(LogFields.EVENT_ACTION, "createAlert");
+        fields.put(LogFields.EVENT_OUTCOME, LogFields.OUTCOME_SUCCESS);
+        fields.put(LogFields.EVENT_DATASET, "centralized-alert.kafka");
+        fields.put(AlertLogFields.EVENT_ID, event.eventId());
+        fields.put(AlertLogFields.ALERT_ID, result.alertId());
+        fields.put(AlertLogFields.ALERT_CREATED, result.created());
+        fields.put(AlertLogFields.ALERT_STATUS, result.status());
+        fields.put(AlertLogFields.TRIGGER_SOURCE, TriggerSource.KAFKA.name());
+        if (kafkaKey != null) {
+            fields.put(AlertLogFields.KAFKA_MESSAGE_KEY, kafkaKey);
+        }
+
+        StructuredLog.info(LOGGER, "Create alert event processed", fields);
     }
 
     private void validate(

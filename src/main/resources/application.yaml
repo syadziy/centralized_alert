@@ -259,10 +259,22 @@ management:
 # =========================
 # LOGGING
 # =========================
+sdk:
+  logging:
+    structured:
+      enabled: true
+      format: ecs
+      auto-configure-format: true
+      trace-header: X-Correlation-Id
+      trace-response-header: true
+    aspect:
+      enabled: true
+      packages: com.mac.alert.service,com.mac.alert.repository
+
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
-    com.example.centralizedalert: ${LOG_LEVEL_APPLICATION:INFO}
+    com.mac.alert: ${LOG_LEVEL_APPLICATION:INFO}
     org.springframework.kafka: ${LOG_LEVEL_KAFKA:INFO}
     org.springframework.security: ${LOG_LEVEL_SECURITY:INFO}
     org.hibernate.SQL: ${LOG_LEVEL_HIBERNATE_SQL:WARN}
@@ -270,13 +282,10 @@ logging:
     org.flywaydb: ${LOG_LEVEL_FLYWAY:DEBUG}
     org.springframework.boot.autoconfigure.flyway: ${LOG_LEVEL_FLYWAY:DEBUG}
 
-  pattern:
-    console: >-
-      %d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}
-      level=%-5level
-      application=${spring.application.name}
-      thread=[%thread]
-      traceId=%X{traceId:-}
-      spanId=%X{spanId:-}
-      logger=%logger{36}
-      message=%msg%n
+  structured:
+    format:
+      console: ecs
+      file: ecs
+    ecs:
+      service:
+        environment: ${SPRING_PROFILES_ACTIVE:local}

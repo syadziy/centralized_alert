@@ -1,7 +1,12 @@
 package com.mac.alert.job;
 
 import com.mac.alert.entities.constant.TriggerSource;
+import com.mac.alert.entities.constant.AlertLogFields;
 import com.mac.alert.service.AlertDispatchService;
+import com.mac.sdk_util.entities.constant.LogFields;
+import com.mac.sdk_util.utils.StructuredLog;
+
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,16 +51,23 @@ public class AlertPickupScheduler {
                                     TriggerSource.SCHEDULER
                             );
 
-            LOGGER.info(
-                    "Alert scheduler completed. processed={}",
-                    processed
-            );
+            StructuredLog.info(LOGGER, "Alert scheduler completed", Map.of(
+                    LogFields.EVENT_ACTION, "pickupPendingAlerts",
+                    LogFields.EVENT_OUTCOME, LogFields.OUTCOME_SUCCESS,
+                    LogFields.EVENT_DATASET, "centralized-alert.scheduler",
+                    AlertLogFields.ALERT_PROCESSED_COUNT, processed,
+                    AlertLogFields.TRIGGER_SOURCE, TriggerSource.SCHEDULER.name()));
 
         } catch (Exception exception) {
-            LOGGER.error(
+            StructuredLog.error(
+                    LOGGER,
                     "Alert scheduler execution failed",
-                    exception
-            );
+                    Map.of(
+                            LogFields.EVENT_ACTION, "pickupPendingAlerts",
+                            LogFields.EVENT_OUTCOME, LogFields.OUTCOME_FAILURE,
+                            LogFields.EVENT_DATASET, "centralized-alert.scheduler",
+                            AlertLogFields.TRIGGER_SOURCE, TriggerSource.SCHEDULER.name()),
+                    exception);
         }
     }
 }
