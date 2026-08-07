@@ -1,0 +1,27 @@
+curl --request POST \
+  --url http://localhost:8080/api/v1/alerts \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "sourceSystem": "PAYMENT-SERVICE",
+    "idempotencyKey": "PAYMENT-SUCCESS-TRX-10001",
+    "correlationId": "TRX-10001",
+    "senderEmail": "no-reply@example.com",
+    "senderName": "Payment Service",
+    "replyToEmail": "support@example.com",
+    "subject": "Pembayaran berhasil",
+    "body": "<h1>Halo <span th:text=\"${customerName}\"></span></h1>",
+    "bodyType": "HTML",
+    "templateVariables": {
+      "customerName": "Arfin"
+    },
+    "priority": 1,
+    "scheduledAt": null,
+    "recipients": [
+      {
+        "type": "TO",
+        "email": "customer@example.com",
+        "displayName": "Customer"
+      }
+    ],
+    "attachments": []
+  }'

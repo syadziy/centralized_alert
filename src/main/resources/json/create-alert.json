@@ -1,0 +1,45 @@
+{
+  "eventId": "3e8bf945-94bf-4a89-a35c-e4f26b22c65e",
+  "occurredAt": "2026-08-06T15:30:00Z",
+  "data": {
+    "sourceSystem": "PAYMENT-SERVICE",
+    "idempotencyKey": "PAYMENT-SUCCESS-TRX-10001",
+    "correlationId": "TRX-10001",
+    "senderEmail": "no-reply@example.com",
+    "senderName": "Payment Service",
+    "replyToEmail": "support@example.com",
+    "subject": "Pembayaran berhasil",
+    "body": "<h1>Halo <span th:text=\"${customerName}\"></span></h1>",
+    "bodyType": "HTML",
+    "templateVariables": {
+      "customerName": "Arfin",
+      "transactionId": "TRX-10001"
+    },
+    "priority": 1,
+    "scheduledAt": "2026-08-06T15:31:00Z",
+    "recipients": [
+      {
+        "type": "TO",
+        "email": "customer@example.com",
+        "displayName": "Customer"
+      },
+      {
+        "type": "CC",
+        "email": "finance@example.com",
+        "displayName": "Finance Team"
+      }
+    ],
+    "attachments": [
+      {
+        "fileName": "invoice-10001.pdf",
+        "contentType": "application/pdf",
+        "fileSizeBytes": 125020,
+        "storageType": "LOCAL",
+        "storageKey": "invoices/invoice-10001.pdf",
+        "checksumSha256": "b51f8667d26d0f12f73791c2ceff73015a9e6955f58f662217aa23e21cc770b0",
+        "disposition": "ATTACHMENT",
+        "contentId": null
+      }
+    ]
+  }
+}
