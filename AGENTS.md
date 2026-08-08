@@ -179,6 +179,10 @@ Configuration rules:
 
 - Add alert settings under `alert.*` and map groups to `@ConfigurationProperties`.
 - Environment-specific values belong in YAML placeholders or environment variables.
+- Organize every application YAML by major property group and precede each group with the
+  three-line banner used in this repository (`# =========================`, an uppercase section
+  name, and the same separator). Separate sections with one blank line and never change property
+  hierarchy merely for formatting.
 - Reuse existing beans for `Clock`, `ObjectMapper`, template engine, Kafka error handling, and
   virtual-thread executor.
 - Do not duplicate SDK auto-configuration in `com.mac.alert`.

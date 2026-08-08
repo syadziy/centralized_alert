@@ -1,3 +1,6 @@
+# =========================
+# LOCAL DEVELOPMENT OVERRIDES
+# =========================
 spring:
   devtools:
     restart:

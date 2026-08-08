@@ -1,17 +1,13 @@
 spring:
   application:
     name: centralized-alert-service
-
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
-
   lifecycle:
     timeout-per-shutdown-phase: 30s
-
   web:
     locale: en
     locale-resolver: fixed
-
   messages:
     fallback-to-system-locale: false
 
@@ -23,7 +19,6 @@ spring:
     username: ${DB_USERNAME:admin}
     password: ${DB_PASSWORD:admin_macbook}
     driver-class-name: org.postgresql.Driver
-
     hikari:
       pool-name: centralized-alert-pool
       minimum-idle: ${DB_POOL_MIN_IDLE:2}
@@ -38,10 +33,8 @@ spring:
   # =========================
   jpa:
     open-in-view: false
-
     hibernate:
       ddl-auto: none
-
     properties:
       hibernate:
         format_sql: false
@@ -70,7 +63,6 @@ spring:
     password: ${MAIL_PASSWORD:}
     protocol: smtp
     default-encoding: UTF-8
-
     properties:
       mail:
         smtp:
@@ -78,11 +70,9 @@ spring:
           starttls:
             enable: ${MAIL_STARTTLS_ENABLED:false}
             required: ${MAIL_STARTTLS_REQUIRED:false}
-
           connectiontimeout: ${MAIL_CONNECTION_TIMEOUT:5000}
           timeout: ${MAIL_READ_TIMEOUT:10000}
           writetimeout: ${MAIL_WRITE_TIMEOUT:10000}
-
         debug: ${MAIL_DEBUG:false}
 
   # =========================
@@ -90,31 +80,25 @@ spring:
   # =========================
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP:centralized-alert-consumer}
       auto-offset-reset: earliest
       enable-auto-commit: false
-
       key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-
       properties:
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.trusted.packages: ${KAFKA_TRUSTED_PACKAGES:com.mac.alert}
         spring.json.use.type.headers: true
         spring.json.value.default.type: com.mac.alert.entities.dto.CreateAlertEvent
-
     listener:
       ack-mode: record
       concurrency: ${KAFKA_CONSUMER_CONCURRENCY:3}
       missing-topics-fatal: false
-
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
       properties:
         enable.idempotence: true
         acks: all
@@ -157,18 +141,14 @@ spring:
 # =========================
 server:
   port: ${SERVER_PORT:9001}
-
   shutdown: graceful
-
   servlet:
     context-path: /
-
   error:
     include-message: never
     include-binding-errors: never
     include-stacktrace: never
     include-exception: false
-
   compression:
     enabled: true
     mime-types:
@@ -187,20 +167,17 @@ alert:
   create:
     default-max-retry: ${ALERT_DEFAULT_MAX_RETRY:5}
     default-priority: ${ALERT_DEFAULT_PRIORITY:5}
-
   pickup:
     enabled: ${ALERT_PICKUP_ENABLED:true}
     interval: ${ALERT_PICKUP_INTERVAL:PT1M}
     initial-delay: ${ALERT_PICKUP_INITIAL_DELAY:PT10S}
     batch-size: ${ALERT_PICKUP_BATCH_SIZE:50}
-
   processing:
     max-retry: ${ALERT_MAX_RETRY:5}
     retry-initial-delay: ${ALERT_RETRY_INITIAL_DELAY:PT1M}
     retry-max-delay: ${ALERT_RETRY_MAX_DELAY:PT30M}
     processing-timeout: ${ALERT_PROCESSING_TIMEOUT:PT10M}
     max-parallelism: ${ALERT_MAX_RPARALLELISM:10}
-
   email:
     default-from: ${MAIL_DEFAULT_FROM:no-reply@example.com}
     default-from-name: ${MAIL_DEFAULT_FROM_NAME:Centralized Alert}
@@ -208,7 +185,6 @@ alert:
     max-recipients: ${MAIL_MAX_RECIPIENTS:100}
     max-attachments: ${MAIL_MAX_ATTACHMENTS:10}
     max-total-attachment-size: ${MAIL_MAX_TOTAL_ATTACHMENT_SIZE:25MB}
-
   kafka:
     enabled: ${ALERT_KAFKA_ENABLED:true}
     topic: ${ALERT_KAFKA_TOPIC:centralized-alert.requested}
@@ -217,7 +193,6 @@ alert:
     error-handling:
       retry-interval-ms: ${ALERT_KAFKA_RETRY_INTERVAL_MS:1000}
       max-retries: ${ALERT_KAFKA_MAX_RETRIES:2}
-
   attachment:
     storage-type: ${ATTACHMENT_STORAGE_TYPE:LOCAL}
     max-file-size: ${ALERT_ATTACHMENT_MAX_FILE_SIZE:10MB}
@@ -238,28 +213,22 @@ management:
           - info
           - metrics
           - prometheus
-
   endpoint:
     health:
       show-details: when-authorized
       probes:
         enabled: true
-
     prometheus:
       access: unrestricted
-
   health:
     mail:
       enabled: false
-
     db:
       enabled: true
-
   metrics:
     tags:
       application: ${spring.application.name}
       environment: ${SPRING_PROFILES_ACTIVE:local}
-
     distribution:
       percentiles-histogram:
         http.server.requests: true
@@ -269,7 +238,7 @@ management:
       probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
 
 # =========================
-# LOGGING
+# SHARED SDK
 # =========================
 sdk:
   logging:
@@ -283,6 +252,9 @@ sdk:
       enabled: true
       packages: com.mac.alert.service,com.mac.alert.repository
 
+# =========================
+# LOGGING
+# =========================
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
@@ -293,7 +265,6 @@ logging:
     org.hibernate.orm.jdbc.bind: ${LOG_LEVEL_HIBERNATE_BIND:WARN}
     org.flywaydb: ${LOG_LEVEL_FLYWAY:DEBUG}
     org.springframework.boot.autoconfigure.flyway: ${LOG_LEVEL_FLYWAY:DEBUG}
-
   structured:
     format:
       console: ecs
