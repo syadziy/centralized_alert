@@ -121,43 +121,6 @@ public class SmtpEmailServiceImpl implements EmailService {
                     Date.from(clock.instant())
             );
 
-            for (var attachment :
-                    alertMessage.attachments()) {
-
-                byte[] fileContent =
-                        attachmentStorageService.load(
-                                attachment
-                        );
-
-                ByteArrayResource resource =
-                        new ByteArrayResource(fileContent);
-
-                if (attachment.disposition()
-                        == AttachmentDisposition.INLINE) {
-
-                    if (!StringUtils.hasText(
-                            attachment.contentId()
-                    )) {
-                        throw new IllegalArgumentException(
-                                "contentId is required for inline attachment"
-                        );
-                    }
-
-                    helper.addInline(
-                            attachment.contentId(),
-                            resource,
-                            attachment.contentType()
-                    );
-
-                } else {
-                    helper.addAttachment(
-                            attachment.fileName(),
-                            resource,
-                            attachment.contentType()
-                    );
-                }
-            }
-
             mimeMessage.saveChanges();
 
             String messageId =

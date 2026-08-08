@@ -102,7 +102,7 @@ cd ../centralized_alert
 4. Jalankan aplikasi:
 
    ```bash
-   ./mvnw spring-boot:run
+   mvn spring-boot:run
    ```
 
 Port default adalah `9001`. Flyway akan menjalankan migration ketika aplikasi dimulai.
@@ -110,9 +110,13 @@ Port default adalah `9001`. Flyway akan menjalankan migration ketika aplikasi di
 Build dan test:
 
 ```bash
-./mvnw clean verify
-./mvnw test
+mvn clean verify
+mvn test
 ```
+
+`mvn clean verify` menjalankan unit test, membuat laporan JaCoCo di
+`target/site/jacoco/index.html`, dan menggagalkan build bila line coverage business production code
+kurang dari 90%.
 
 Dokumentasi JSON untuk seluruh REST API dan Kafka event tersedia di
 `src/main/resources/json/index.json`. File tersebut menjadi indeks menuju contoh request dan

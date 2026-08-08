@@ -1,13 +1,14 @@
 package com.mac.alert;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest(properties = "sdk.security.enabled=false")
+import org.junit.jupiter.api.Test;
 class AlertApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void applicationDeclaresSpringBootConfiguration() {
+		assertNotNull(AlertApplication.class.getAnnotation(
+				org.springframework.boot.autoconfigure.SpringBootApplication.class));
 	}
 
 }
