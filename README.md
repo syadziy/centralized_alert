@@ -114,6 +114,10 @@ Build dan test:
 ./mvnw test
 ```
 
+Dokumentasi JSON untuk seluruh REST API dan Kafka event tersedia di
+`src/main/resources/json/index.json`. File tersebut menjadi indeks menuju contoh request dan
+response setiap contract.
+
 ## REST API
 
 Semua response REST menggunakan envelope dari `sdk-util`. Client dapat mengirim
@@ -351,7 +355,7 @@ src/main/java/com/mac/alert/
 
 src/main/resources/
 ├── db/migration/           # Flyway migrations
-├── json/                   # Contoh payload
+├── json/                   # Indeks serta contoh REST API dan Kafka event
 ├── application.yaml
 └── application-local.yaml
 ```

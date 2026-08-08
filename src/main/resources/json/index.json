@@ -1,0 +1,28 @@
+{
+  "service": "centralized-alert-service",
+  "baseUrl": "http://localhost:9001",
+  "restApis": [
+    {
+      "method": "POST",
+      "path": "/api/v1/alert",
+      "example": "api-create-alert.json"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/alert/{alertId}/dispatch",
+      "example": "api-dispatch-alert.json"
+    }
+  ],
+  "kafkaEvents": [
+    {
+      "topicProperty": "alert.kafka.create-topic",
+      "defaultTopic": "centralized-alert.create",
+      "example": "create-alert.json"
+    },
+    {
+      "topicProperty": "alert.kafka.topic",
+      "defaultTopic": "centralized-alert.requested",
+      "example": "dispatch-alert.json"
+    }
+  ]
+}

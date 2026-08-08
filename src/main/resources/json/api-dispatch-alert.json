@@ -1,0 +1,35 @@
+{
+  "name": "Dispatch alert manually",
+  "method": "POST",
+  "url": "http://localhost:9001/api/v1/alert/97e95252-e1d4-42f4-89aa-c42b61424923/dispatch",
+  "pathParameters": {
+    "alertId": "97e95252-e1d4-42f4-89aa-c42b61424923"
+  },
+  "headers": {
+    "Authorization": "Bearer <access-token>",
+    "X-Correlation-Id": "manual-dispatch-10001"
+  },
+  "requestBody": null,
+  "responses": {
+    "202": {
+      "code": "RC-202",
+      "message": "accepted",
+      "data": {
+        "alertId": "97e95252-e1d4-42f4-89aa-c42b61424923",
+        "accepted": true,
+        "message": "Alert processed successfully"
+      },
+      "errors": null
+    },
+    "409": {
+      "code": "RC-409",
+      "message": "conflict",
+      "data": {
+        "alertId": "97e95252-e1d4-42f4-89aa-c42b61424923",
+        "accepted": false,
+        "message": "Alert cannot be processed because its status is neither PENDING nor RETRY"
+      },
+      "errors": null
+    }
+  }
+}

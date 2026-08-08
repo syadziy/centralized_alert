@@ -1,18 +1,25 @@
-curl --request POST \
-  --url http://localhost:8080/api/v1/alerts \
-  --header 'Content-Type: application/json' \
-  --data '{
+{
+  "name": "Create alert",
+  "method": "POST",
+  "url": "http://localhost:9001/api/v1/alert",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer <access-token>",
+    "X-Correlation-Id": "payment-trx-10001"
+  },
+  "requestBody": {
     "sourceSystem": "PAYMENT-SERVICE",
     "idempotencyKey": "PAYMENT-SUCCESS-TRX-10001",
     "correlationId": "TRX-10001",
     "senderEmail": "no-reply@example.com",
     "senderName": "Payment Service",
     "replyToEmail": "support@example.com",
-    "subject": "Pembayaran berhasil",
-    "body": "<h1>Halo <span th:text=\"${customerName}\"></span></h1>",
+    "subject": "Payment completed",
+    "body": "<h1>Hello <span th:text=\"${customerName}\"></span></h1>",
     "bodyType": "HTML",
     "templateVariables": {
-      "customerName": "Arfin"
+      "customerName": "Customer",
+      "transactionId": "TRX-10001"
     },
     "priority": 1,
     "scheduledAt": null,
@@ -21,7 +28,50 @@ curl --request POST \
         "type": "TO",
         "email": "customer@example.com",
         "displayName": "Customer"
+      },
+      {
+        "type": "CC",
+        "email": "finance@example.com",
+        "displayName": "Finance Team"
       }
     ],
-    "attachments": []
-  }'
+    "attachments": [
+      {
+        "fileName": "invoice-10001.pdf",
+        "contentType": "application/pdf",
+        "fileSizeBytes": 125020,
+        "storageType": "LOCAL",
+        "storageKey": "invoices/invoice-10001.pdf",
+        "checksumSha256": "b51f8667d26d0f12f73791c2ceff73015a9e6955f58f662217aa23e21cc770b0",
+        "disposition": "ATTACHMENT",
+        "contentId": null
+      }
+    ]
+  },
+  "responses": {
+    "201": {
+      "code": "RC-201",
+      "message": "created",
+      "data": {
+        "alertId": "97e95252-e1d4-42f4-89aa-c42b61424923",
+        "status": "PENDING",
+        "created": true,
+        "createdAt": "2026-08-09T01:00:00Z",
+        "message": "Alert created successfully"
+      },
+      "errors": null
+    },
+    "200Duplicate": {
+      "code": "RC-200",
+      "message": "success",
+      "data": {
+        "alertId": "97e95252-e1d4-42f4-89aa-c42b61424923",
+        "status": "PENDING",
+        "created": false,
+        "createdAt": "2026-08-09T01:00:00Z",
+        "message": "An alert with the same idempotency key already exists"
+      },
+      "errors": null
+    }
+  }
+}

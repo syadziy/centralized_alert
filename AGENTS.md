@@ -299,6 +299,22 @@ also be explicitly validated by the listener because they do not pass through Sp
 
 Every behavior change must include focused tests.
 
+### Unit Test Coverage Standard
+
+- Unit-test line coverage must be at least 90% for production business code.
+- New or changed business logic must maintain at least 90% line coverage before a task is
+  considered complete.
+- Measure coverage with JaCoCo when reporting or enforcing the percentage; never estimate coverage
+  from the number of tests.
+- Coverage scope must include controllers, services, repositories, mappers, jobs/subscribers,
+  exception handlers, and business utilities. Pure DTOs, enums, generated code, and trivial Spring
+  bootstrap/configuration classes may be excluded when the exclusion is explicit and justified.
+- Do not add meaningless assertions, invoke code without verifying outcomes, or weaken exclusions
+  merely to reach the target. Cover success, validation, failure, retry, concurrency, and boundary
+  behavior according to the risk of the changed code.
+- If the 90% target cannot be verified because JaCoCo is not configured or a required external
+  dependency is unavailable, report that limitation explicitly; do not claim the target passed.
+
 - Unit-test mapper normalization, retry calculation, failure classification, and service rules.
 - Use integration tests for JDBC queries, Flyway migrations, transaction/state transitions, REST
   contracts, Kafka retry/DLT behavior, or serialization changes.
@@ -307,8 +323,8 @@ Every behavior change must include focused tests.
 - Test both success and failure paths, including retryable versus non-retryable failures.
 - Avoid tests that depend on wall-clock time; inject `Clock` or use fixed instants.
 
-Do not claim a coverage percentage unless a coverage tool is configured and measured. Favor
-meaningful assertions over a numeric target.
+Do not claim a coverage percentage unless it was produced by the configured coverage tool. The
+90% minimum complements, rather than replaces, meaningful behavioral assertions.
 
 ---
 
