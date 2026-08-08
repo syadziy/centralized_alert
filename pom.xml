@@ -9,27 +9,17 @@
         <version>4.1.0</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
+
     <groupId>com.mac</groupId>
     <artifactId>alert</artifactId>
     <version>1.0.0</version>
     <name>alert</name>
-    <description />
-    <url />
-    <licenses>
-        <license />
-    </licenses>
-    <developers>
-        <developer />
-    </developers>
-    <scm>
-        <connection />
-        <developerConnection />
-        <tag />
-        <url />
-    </scm>
+    <description>Centralized Alert for another service</description>
+    
     <properties>
         <java.version>21</java.version>
     </properties>
+
     <dependencies>
         <!-- REST API -->
         <dependency>
@@ -176,5 +166,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

@@ -1,2 +1,359 @@
-# centralized_alert
-This apps is used to Centralized Alert for another Service
+# Centralized Alert Service
+
+`centralized_alert` adalah service terpusat untuk menerima, menyimpan, dan mengirim alert email
+dari service lain. Alert dapat dibuat melalui REST API atau Kafka, lalu dikirim secara manual,
+melalui event Kafka, atau otomatis oleh scheduler internal.
+
+Service ini dirancang agar proses pengiriman durable, idempotent, aman dijalankan oleh beberapa
+instance, dan mudah dipantau melalui ECS structured logging, trace ID, Actuator, serta Prometheus.
+
+## Fitur utama
+
+- Pembuatan alert melalui REST API dan Kafka.
+- Idempotency berdasarkan pasangan `sourceSystem` dan `idempotencyKey`.
+- Recipient `TO`, `CC`, dan `BCC` dengan validasi email dan duplikasi.
+- Email body `TEXT` atau `HTML` dengan Thymeleaf template variables.
+- Penjadwalan pengiriman menggunakan `scheduledAt`.
+- Attachment metadata dengan storage `LOCAL`, `S3`, atau `MINIO`.
+- Implementasi pembacaan attachment `LOCAL` dengan proteksi path traversal, ukuran, dan checksum.
+- Pengiriman SMTP secara paralel menggunakan Java virtual threads.
+- Retry dengan exponential backoff dan klasifikasi error retryable/non-retryable.
+- Claim database yang aman untuk beberapa worker dan recovery alert yang timeout.
+- Kafka retry dan dead-letter topic (DLT).
+- Response envelope, global exception handling, security, OpenAPI, ECS logging, trace ID, dan MDC
+  dari `sdk-util`.
+
+## Teknologi
+
+| Komponen | Implementasi |
+| --- | --- |
+| Runtime | Java 21 |
+| Framework | Spring Boot 4.1.0 |
+| REST | Spring MVC + Jakarta Validation |
+| Database | PostgreSQL + Spring JDBC |
+| Migration | Flyway |
+| Messaging | Spring Kafka |
+| Email | Jakarta Mail + Thymeleaf |
+| Concurrency | Java virtual threads |
+| Monitoring | Actuator + Prometheus |
+| Shared library | `com.mac:sdk-util:1.0.0` |
+
+## Alur pemrosesan
+
+```text
+REST POST /api/v1/alert             Kafka centralized-alert.create
+             │                                  │
+             └──────────── validate + normalize ┘
+                                │
+                                ▼
+                 Simpan alert secara idempotent
+                 beserta recipient dan attachment
+                                │
+              ┌─────────────────┼──────────────────┐
+              │                 │                  │
+        pickup scheduler   manual dispatch    Kafka dispatch event
+              │                 │                  │
+              └──────────── claim alert ───────────┘
+                                │
+                                ▼
+                 Kirim email pada virtual thread
+                                │
+                 ┌──────────────┴──────────────┐
+                 ▼                             ▼
+           SENT + history             RETRY/FAILED/DEAD
+                                      + delivery history
+```
+
+Claim dilakukan dalam transaksi singkat. Operasi SMTP dan pembacaan attachment berlangsung di
+luar transaksi database. Alert berstatus `PROCESSING` yang melewati
+`alert.processing.processing-timeout` dapat diambil kembali oleh worker lain.
+
+## Prasyarat
+
+- JDK 21
+- PostgreSQL
+- Kafka
+- SMTP server
+- Maven Wrapper yang tersedia di repository
+- `sdk-util:1.0.0` pada local Maven repository
+- OAuth2/JWT issuer jika security diaktifkan
+
+Install versi terbaru sibling SDK sebelum menjalankan service:
+
+```bash
+cd ../sdk_util
+mvn clean install
+cd ../centralized_alert
+```
+
+## Menjalankan secara lokal
+
+1. Buat database PostgreSQL:
+
+   ```sql
+   CREATE DATABASE central_alert;
+   ```
+
+2. Salin nilai yang diperlukan dari `.env.example` ke environment lokal. Jangan commit file
+   `.env` atau credential sebenarnya.
+
+3. Pastikan PostgreSQL, Kafka, SMTP, dan OAuth2 issuer yang dikonfigurasi dapat diakses.
+
+4. Jalankan aplikasi:
+
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+Port default adalah `9001`. Flyway akan menjalankan migration ketika aplikasi dimulai.
+
+Build dan test:
+
+```bash
+./mvnw clean verify
+./mvnw test
+```
+
+## REST API
+
+Semua response REST menggunakan envelope dari `sdk-util`. Client dapat mengirim
+`X-Correlation-Id`; jika tidak tersedia, SDK membuat trace ID dan mengembalikannya melalui header
+response.
+
+### Membuat alert
+
+`POST /api/v1/alert`
+
+```bash
+curl --request POST 'http://localhost:9001/api/v1/alert' \
+  --header 'Content-Type: application/json' \
+  --header 'X-Correlation-Id: payment-trx-10001' \
+  --data '{
+    "sourceSystem": "PAYMENT-SERVICE",
+    "idempotencyKey": "PAYMENT-SUCCESS-TRX-10001",
+    "correlationId": "TRX-10001",
+    "senderEmail": "no-reply@example.com",
+    "senderName": "Payment Service",
+    "replyToEmail": "support@example.com",
+    "subject": "Payment completed",
+    "body": "<h1>Hello <span th:text=\"${customerName}\"></span></h1>",
+    "bodyType": "HTML",
+    "templateVariables": {
+      "customerName": "Customer"
+    },
+    "priority": 1,
+    "scheduledAt": null,
+    "recipients": [
+      {
+        "type": "TO",
+        "email": "customer@example.com",
+        "displayName": "Customer"
+      }
+    ],
+    "attachments": []
+  }'
+```
+
+Aturan penting:
+
+- `sourceSystem` dan `idempotencyKey` wajib dan membentuk idempotency key unik.
+- Request pertama menghasilkan HTTP `201`; request duplikat mengembalikan data alert yang sudah
+  ada dengan HTTP `200` tanpa membuat recipient atau attachment baru.
+- Minimal satu recipient bertipe `TO` wajib tersedia.
+- Kombinasi tipe dan email recipient tidak boleh duplikat.
+- `priority` berada pada rentang `1`–`9`; `1` adalah prioritas tertinggi.
+- Jika `priority` kosong, nilai `alert.create.default-priority` digunakan.
+- Jika `scheduledAt` kosong, alert dapat diproses segera.
+- Attachment `INLINE` wajib memiliki `contentId`.
+- Client-facing validation dan error messages menggunakan bahasa Inggris.
+
+Contoh data response:
+
+```json
+{
+  "alertId": "97e95252-e1d4-42f4-89aa-c42b61424923",
+  "status": "PENDING",
+  "created": true,
+  "createdAt": "2026-08-09T01:00:00Z",
+  "message": "Alert created successfully"
+}
+```
+
+### Mengirim alert secara manual
+
+`POST /api/v1/alert/{alertId}/dispatch`
+
+```bash
+curl --request POST \
+  'http://localhost:9001/api/v1/alert/97e95252-e1d4-42f4-89aa-c42b61424923/dispatch'
+```
+
+Endpoint menerima alert yang dapat di-claim dari status `PENDING` atau `RETRY`. Jika state alert
+tidak memenuhi syarat, response adalah HTTP `409 Conflict`.
+
+## Kafka contract
+
+### Membuat alert melalui Kafka
+
+Topic default: `centralized-alert.create`
+
+```json
+{
+  "eventId": "3e8bf945-94bf-4a89-a35c-e4f26b22c65e",
+  "occurredAt": "2026-08-06T15:30:00Z",
+  "data": {
+    "sourceSystem": "PAYMENT-SERVICE",
+    "idempotencyKey": "PAYMENT-SUCCESS-TRX-10001",
+    "correlationId": "TRX-10001",
+    "senderEmail": "no-reply@example.com",
+    "senderName": "Payment Service",
+    "replyToEmail": "support@example.com",
+    "subject": "Payment completed",
+    "body": "Payment completed successfully",
+    "bodyType": "TEXT",
+    "templateVariables": {},
+    "priority": 1,
+    "scheduledAt": "2026-08-06T15:31:00Z",
+    "recipients": [
+      {
+        "type": "TO",
+        "email": "customer@example.com",
+        "displayName": "Customer"
+      }
+    ],
+    "attachments": []
+  }
+}
+```
+
+Kafka payload divalidasi secara eksplisit. Kafka message key digunakan sebagai `trace.id`; jika
+tidak tersedia, service memakai `eventId`, lalu UUID acak sebagai fallback.
+
+### Memicu dispatch melalui Kafka
+
+Topic default: `centralized-alert.requested`
+
+```json
+{
+  "alertId": "97e95252-e1d4-42f4-89aa-c42b61424923"
+}
+```
+
+Setelah retry Kafka habis, record dikirim ke topic default
+`centralized-alert.requested.dlt`. Nama topic, retry interval, dan jumlah retry dapat dikonfigurasi.
+
+## Attachment
+
+REST/Kafka hanya mengirim metadata attachment; file besar tidak disimpan di payload alert.
+
+```json
+{
+  "fileName": "invoice-10001.pdf",
+  "contentType": "application/pdf",
+  "fileSizeBytes": 125020,
+  "storageType": "LOCAL",
+  "storageKey": "invoices/invoice-10001.pdf",
+  "checksumSha256": "b51f8667d26d0f12f73791c2ceff73015a9e6955f58f662217aa23e21cc770b0",
+  "disposition": "ATTACHMENT",
+  "contentId": null
+}
+```
+
+Implementasi runtime saat ini membaca storage `LOCAL`. File dicari relatif terhadap
+`alert.attachment.local.base-directory`; absolute/path-traversal escape ditolak. Metadata ukuran,
+ukuran file aktual, batas maksimum, dan checksum SHA-256 akan diverifikasi sebelum pengiriman.
+Enum `S3` dan `MINIO` sudah menjadi bagian kontrak data, tetapi memerlukan implementasi
+`AttachmentStorageService` tambahan untuk dapat dikirim.
+
+## Database
+
+Flyway mengelola tabel berikut:
+
+- `alert_request`: lifecycle, idempotency, schedule, retry, dan worker lease.
+- `alert_recipient`: recipient `TO`, `CC`, dan `BCC`.
+- `alert_attachment`: metadata attachment.
+- `alert_delivery_history`: immutable history untuk setiap delivery attempt.
+
+Status alert yang tersimpan adalah `PENDING`, `PROCESSING`, `RETRY`, `SENT`, `FAILED`, `DEAD`, dan
+`CANCELLED`. Jangan mengubah migration yang sudah pernah dijalankan; tambahkan migration versi
+baru untuk setiap perubahan schema.
+
+## Konfigurasi utama
+
+| Property/environment | Default | Fungsi |
+| --- | --- | --- |
+| `SERVER_PORT` | `9001` | Port HTTP service |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/central_alert` | PostgreSQL connection URL |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka brokers |
+| `ALERT_KAFKA_TOPIC` | `centralized-alert.requested` | Dispatch topic |
+| `ALERT_KAFKA_CREATE_TOPIC` | `centralized-alert.create` | Create-alert topic |
+| `ALERT_KAFKA_DLT_TOPIC` | `centralized-alert.requested.dlt` | Dead-letter topic |
+| `ALERT_PICKUP_ENABLED` | `true` | Mengaktifkan pickup scheduler |
+| `ALERT_PICKUP_INTERVAL` | `PT1M` | Interval pickup |
+| `ALERT_PICKUP_BATCH_SIZE` | `50` | Maksimum alert per pickup |
+| `alert.processing.processing-timeout` | `PT10M` | Lease timeout untuk recovery |
+| `alert.processing.max-parallelism` | `10` | Maksimum pengiriman paralel |
+| `alert.processing.retry-initial-delay` | `PT1M` | Delay retry awal |
+| `alert.processing.retry-max-delay` | `PT30M` | Batas exponential backoff |
+| `MAIL_HOST` / `MAIL_PORT` | `localhost` / `1025` | SMTP server |
+| `ATTACHMENT_LOCAL_DIRECTORY` | `./data/attachments` | Root attachment lokal |
+| `OAUTH2_ISSUER_URI` | local issuer | JWT issuer |
+
+Durasi menggunakan format ISO-8601, misalnya `PT30S`, `PT1M`, dan `PT10M`. Lihat
+`.env.example` dan `application.yaml` untuk seluruh property.
+
+## Observability
+
+- Log console dan file menggunakan ECS JSON.
+- Business log memakai `event.action`, `event.outcome`, `event.dataset`, dan field `alert.*`.
+- REST trace dibaca dari/dikembalikan melalui `X-Correlation-Id`.
+- Kafka, scheduler, dan virtual thread membuat atau meneruskan MDC `trace.id` secara eksplisit.
+- Health endpoint: `GET /actuator/health`.
+- Prometheus endpoint: `GET /actuator/prometheus`.
+- Metrics umum: `GET /actuator/metrics`.
+
+Body email, credential, attachment content, access token, dan recipient personal data tidak boleh
+ditulis ke log.
+
+## Security
+
+Service dikonfigurasi sebagai OAuth2 resource server. Gunakan bearer token dari issuer yang sesuai
+untuk endpoint yang dilindungi. Untuk production:
+
+- Simpan DB, SMTP, Kafka, dan OAuth2 credential pada secret manager/environment.
+- Batasi CORS dan daftar public path dari `sdk-util`.
+- Jangan gunakan default credential dari `.env.example`.
+- Batasi akses filesystem ke attachment directory.
+- Jangan memperluas Kafka trusted packages tanpa kebutuhan yang jelas.
+
+## Catatan operasional
+
+- Jalankan lebih dari satu instance hanya dengan PostgreSQL yang sama agar claim tetap
+  terkoordinasi.
+- Atur `processing-timeout` lebih panjang daripada waktu pengiriman email terlama yang valid.
+- Pastikan SMTP operation tidak melebihi configured connection/read/write timeout.
+- Pantau status `RETRY`, `FAILED`, `DEAD`, Kafka DLT, serta processing timeout.
+- Idempotency mencegah duplikasi record creation; provider SMTP tetap menentukan jaminan delivery
+  akhir ketika terjadi crash di sekitar acknowledgement.
+
+## Struktur project
+
+```text
+src/main/java/com/mac/alert/
+├── config/                 # Bean, Kafka, Jackson, template, virtual-thread configuration
+├── controller/             # REST API
+├── entities/               # Constant, DTO, mapper, dan domain model
+├── job/                    # Scheduled alert pickup
+├── repository/             # JDBC persistence dan state transition
+├── service/                # Creation, dispatch, SMTP, template, dan attachment logic
+├── subscriber/             # Kafka listener
+└── utils/                  # Retry, failure classification, worker ID, exception handlers
+
+src/main/resources/
+├── db/migration/           # Flyway migrations
+├── json/                   # Contoh payload
+├── application.yaml
+└── application-local.yaml
+```
+
+Panduan kontribusi dan aturan implementasi tersedia pada `AGENTS.md`.
