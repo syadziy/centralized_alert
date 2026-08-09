@@ -1,6 +1,6 @@
 {
   "name": "Manage alert recipients from dashboard",
-  "baseUrl": "http://localhost:9001/api/v1/alert/recipients",
+  "baseUrl": "http://localhost:9003/api/v1/alert/recipients",
   "headers": {
     "Content-Type": "application/json",
     "Authorization": "Bearer <access-token>",
@@ -9,12 +9,12 @@
   "operations": [
     {
       "method": "GET",
-      "url": "http://localhost:9001/api/v1/alert/recipients?sourceSystem=PAYMENT-SERVICE&limit=100&offset=0",
+      "url": "http://localhost:9003/api/v1/alert/recipients?sourceSystem=PAYMENT-SERVICE&limit=100&offset=0",
       "requiredPermission": "alert:read-recipients"
     },
     {
       "method": "POST",
-      "url": "http://localhost:9001/api/v1/alert/recipients",
+      "url": "http://localhost:9003/api/v1/alert/recipients",
       "requiredPermission": "alert:manage-recipients",
       "requestBody": {
         "sourceSystem": "PAYMENT-SERVICE",
@@ -26,7 +26,7 @@
     },
     {
       "method": "PUT",
-      "url": "http://localhost:9001/api/v1/alert/recipients/97e95252-e1d4-42f4-89aa-c42b61424923",
+      "url": "http://localhost:9003/api/v1/alert/recipients/97e95252-e1d4-42f4-89aa-c42b61424923",
       "requiredPermission": "alert:manage-recipients",
       "requestBody": {
         "sourceSystem": "PAYMENT-SERVICE",
@@ -38,7 +38,7 @@
     },
     {
       "method": "DELETE",
-      "url": "http://localhost:9001/api/v1/alert/recipients/97e95252-e1d4-42f4-89aa-c42b61424923",
+      "url": "http://localhost:9003/api/v1/alert/recipients/97e95252-e1d4-42f4-89aa-c42b61424923",
       "requiredPermission": "alert:manage-recipients"
     }
   ],

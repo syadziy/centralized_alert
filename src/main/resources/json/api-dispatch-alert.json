@@ -1,7 +1,7 @@
 {
   "name": "Dispatch alert manually",
   "method": "POST",
-  "url": "http://localhost:9001/api/v1/alert/97e95252-e1d4-42f4-89aa-c42b61424923/dispatch",
+  "url": "http://localhost:9003/api/v1/alert/97e95252-e1d4-42f4-89aa-c42b61424923/dispatch",
   "pathParameters": {
     "alertId": "97e95252-e1d4-42f4-89aa-c42b61424923"
   },

@@ -111,7 +111,7 @@ cd ../centralized_alert
    mvn spring-boot:run
    ```
 
-Port default adalah `9001`. Flyway akan menjalankan migration ketika aplikasi dimulai.
+Port default adalah `9003`. Flyway akan menjalankan migration ketika aplikasi dimulai.
 
 Build dan test:
 
@@ -132,7 +132,7 @@ tetap tersedia setelah container diganti:
 ```bash
 mvn clean package
 docker build -t centralized-alert:1.0.0 .
-docker run --rm --env-file .env -p 9001:9001 \
+docker run --rm --env-file .env -p 9003:9003 \
   -v centralized_alert_attachments:/app/data/attachments \
   centralized-alert:1.0.0
 ```
@@ -146,7 +146,7 @@ response setiap contract.
 
 ## Realtime WebSocket notification
 
-Dashboard terhubung ke endpoint STOMP `ws://localhost:9100/ws/alerts` melalui API Gateway dan
+Dashboard terhubung ke endpoint STOMP `ws://localhost:9001/ws/alerts` melalui API Gateway dan
 subscribe ke destination `/topic/alerts`. Browser mengirim bearer token pada STOMP frame `CONNECT`,
 bukan query string. Token wajib memiliki permission `alert:read-notifications`.
 
@@ -175,7 +175,7 @@ Dashboard dapat memakai endpoint berikut:
 Contoh membuat penerima khusus `PAYMENT-SERVICE`:
 
 ```bash
-curl --request POST 'http://localhost:9001/api/v1/alert/recipients' \
+curl --request POST 'http://localhost:9003/api/v1/alert/recipients' \
   --header 'Authorization: Bearer <access-token>' \
   --header 'Content-Type: application/json' \
   --data '{
@@ -202,7 +202,7 @@ Hasil akhirnya tetap wajib memiliki minimal satu penerima `TO`.
 `POST /api/v1/alert`
 
 ```bash
-curl --request POST 'http://localhost:9001/api/v1/alert' \
+curl --request POST 'http://localhost:9003/api/v1/alert' \
   --header 'Content-Type: application/json' \
   --header 'X-Correlation-Id: payment-trx-10001' \
   --data '{
@@ -262,7 +262,7 @@ Contoh data response:
 
 ```bash
 curl --request POST \
-  'http://localhost:9001/api/v1/alert/97e95252-e1d4-42f4-89aa-c42b61424923/dispatch'
+  'http://localhost:9003/api/v1/alert/97e95252-e1d4-42f4-89aa-c42b61424923/dispatch'
 ```
 
 Endpoint menerima alert yang dapat di-claim dari status `PENDING` atau `RETRY`. Jika state alert
@@ -360,7 +360,7 @@ baru untuk setiap perubahan schema.
 
 | Property/environment | Default | Fungsi |
 | --- | --- | --- |
-| `SERVER_PORT` | `9001` | Port HTTP service |
+| `SERVER_PORT` | `9003` | Port HTTP service |
 | `DB_URL` | `jdbc:postgresql://localhost:5432/centralized_alert` | PostgreSQL connection URL |
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka brokers |
 | `ALERT_KAFKA_TOPIC` | `centralized-alert.requested` | Dispatch topic |

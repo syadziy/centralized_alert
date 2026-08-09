@@ -15,6 +15,6 @@ ARG JAR_FILE=target/*.jar
 COPY --chown=app:app ${JAR_FILE} app.jar
 
 USER 10001:10001
-EXPOSE 9001
+EXPOSE 9003
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

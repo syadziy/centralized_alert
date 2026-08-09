@@ -1,6 +1,6 @@
 {
   "service": "centralized-alert-service",
-  "baseUrl": "http://localhost:9001",
+  "baseUrl": "http://localhost:9003",
   "restApis": [
     {
       "method": "POST",
