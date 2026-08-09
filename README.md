@@ -24,6 +24,7 @@ instance, dan mudah dipantau melalui ECS structured logging, trace ID, Actuator,
 - Retry dengan exponential backoff dan klasifikasi error retryable/non-retryable.
 - Claim database yang aman untuk beberapa worker dan recovery alert yang timeout.
 - Kafka retry dan dead-letter topic (DLT).
+- Notifikasi dashboard realtime melalui STOMP over WebSocket setelah transaksi alert berhasil.
 - Response envelope, global exception handling, security, OpenAPI, ECS logging, trace ID, dan MDC
   dari `sdk-util`.
 
@@ -37,6 +38,7 @@ instance, dan mudah dipantau melalui ECS structured logging, trace ID, Actuator,
 | Database | PostgreSQL + Spring JDBC |
 | Migration | Flyway |
 | Messaging | Spring Kafka |
+| Realtime | Spring WebSocket + STOMP |
 | Email | Jakarta Mail + Thymeleaf |
 | Concurrency | Java virtual threads |
 | Monitoring | Actuator + Prometheus |
@@ -141,6 +143,17 @@ serta issuer OAuth2. Untuk object storage, volume attachment lokal dapat dihilan
 Dokumentasi JSON untuk seluruh REST API dan Kafka event tersedia di
 `src/main/resources/json/index.json`. File tersebut menjadi indeks menuju contoh request dan
 response setiap contract.
+
+## Realtime WebSocket notification
+
+Dashboard terhubung ke endpoint STOMP `ws://localhost:9100/ws/alerts` melalui API Gateway dan
+subscribe ke destination `/topic/alerts`. Browser mengirim bearer token pada STOMP frame `CONNECT`,
+bukan query string. Token wajib memiliki permission `alert:read-notifications`.
+
+Notifikasi hanya diterbitkan untuk alert baru setelah transaksi database commit. Request dengan
+idempotency key yang sudah tersimpan tidak menghasilkan notifikasi kedua. Payload sengaja tidak
+memuat body, recipient, attachment, atau credential. Contoh lengkap tersedia di
+`src/main/resources/json/websocket-alert-notification.json`.
 
 ## REST API
 
@@ -362,6 +375,8 @@ baru untuk setiap perubahan schema.
 | `alert.processing.retry-max-delay` | `PT30M` | Batas exponential backoff |
 | `MAIL_HOST` / `MAIL_PORT` | `localhost` / `1025` | SMTP server |
 | `ATTACHMENT_LOCAL_DIRECTORY` | `./data/attachments` | Root attachment lokal |
+| `ALERT_WEBSOCKET_ENABLED` | `true` | Mengaktifkan broker notifikasi realtime |
+| `ALERT_WEBSOCKET_ALLOWED_ORIGINS` | `http://localhost:5173` | Origin dashboard yang boleh handshake |
 | `OAUTH2_ISSUER_URI` | `http://localhost:9005` | `usermanagement` JWT issuer |
 
 Durasi menggunakan format ISO-8601, misalnya `PT30S`, `PT1M`, dan `PT10M`. Lihat
@@ -392,6 +407,7 @@ aksesnya dengan network policy atau service mesh karena tidak ada pemeriksaan id
 - Batasi CORS dan daftar public path dari `sdk-util`.
 - Jangan gunakan default credential dari `.env.example`.
 - Batasi akses filesystem ke attachment directory.
+- Batasi origin WebSocket dan wajibkan permission `alert:read-notifications` pada STOMP `CONNECT`.
 - Jangan memperluas Kafka trusted packages tanpa kebutuhan yang jelas.
 
 ## Catatan operasional

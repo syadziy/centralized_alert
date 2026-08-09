@@ -29,5 +29,10 @@
       "defaultTopic": "centralized-alert.requested",
       "example": "dispatch-alert.json"
     }
-  ]
+  ],
+  "webSocket": {
+    "endpoint": "/ws/alerts",
+    "destination": "/topic/alerts",
+    "example": "websocket-alert-notification.json"
+  }
 }

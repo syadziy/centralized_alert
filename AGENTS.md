@@ -14,6 +14,7 @@ Stack utama:
 - Spring JDBC (`JdbcTemplate` dan `NamedParameterJdbcTemplate`)
 - PostgreSQL dan Flyway
 - Spring Kafka dengan retry dan dead-letter topic
+- STOMP over WebSocket untuk notifikasi dashboard realtime
 - Jakarta Mail dan Thymeleaf
 - Virtual threads untuk pengiriman paralel
 - Actuator, Prometheus, dan ECS structured logging dari `sdk-util`
@@ -23,9 +24,10 @@ Alur utama service:
 
 1. Alert dibuat melalui REST atau Kafka.
 2. Data alert, recipient, dan attachment disimpan secara idempotent di PostgreSQL.
-3. Scheduler atau endpoint manual melakukan claim terhadap alert yang siap diproses.
-4. Pengiriman berjalan paralel melalui virtual-thread executor.
-5. Hasil pengiriman dan retry history disimpan; Kafka failure yang exhausted dikirim ke DLT.
+3. Alert baru menerbitkan notifikasi dashboard setelah transaksi database berhasil commit.
+4. Scheduler atau endpoint manual melakukan claim terhadap alert yang siap diproses.
+5. Pengiriman berjalan paralel melalui virtual-thread executor.
+6. Hasil pengiriman dan retry history disimpan; Kafka failure yang exhausted dikirim ke DLT.
 
 Prioritas desain:
 
@@ -41,7 +43,7 @@ Prioritas desain:
 
 ```text
 src/main/java/com/mac/alert/
-├── config/                 # Spring beans, Kafka, Jackson, template, virtual thread
+├── config/                 # Spring beans, Kafka, WebSocket, Jackson, template, virtual thread
 │   └── properties/         # Type-safe alert configuration properties
 ├── controller/             # REST endpoints and response mapping
 ├── entities/
@@ -190,6 +192,8 @@ Configuration rules:
   hierarchy merely for formatting.
 - Reuse existing beans for `Clock`, `ObjectMapper`, template engine, Kafka error handling, and
   virtual-thread executor.
+- Publish sanitized realtime events only after a new alert transaction commits. Duplicate
+  idempotency requests must not emit another notification.
 - Do not duplicate SDK auto-configuration in `com.mac.alert`.
 - Keep scheduler and Kafka feature switches conditional on their existing properties.
 
@@ -380,6 +384,10 @@ real customer data. Use environment variables and secret management.
 - Validate attachment paths and prevent directory traversal.
 - Do not trust Kafka JSON packages more broadly than required.
 - Do not return internal exception details in API responses.
+- WebSocket handshake `/ws/alerts` is public only because STOMP `CONNECT` validates the JWT.
+  Require `PERM_alert:read-notifications`; never put access tokens in URLs or logs.
+- Realtime payloads must not contain message bodies, recipients, attachments, credentials, or
+  authorization headers.
 
 Security-sensitive changes require tests for unauthenticated, unauthorized, and permitted cases.
 

@@ -1,0 +1,17 @@
+{
+  "endpoint": "ws://localhost:9100/ws/alerts",
+  "protocol": "STOMP 1.2",
+  "connectHeaders": {
+    "Authorization": "Bearer <access-token-with-alert:read-notifications>"
+  },
+  "subscription": "/topic/alerts",
+  "message": {
+    "alertId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "eventType": "ALERT_CREATED",
+    "sourceSystem": "scheduler",
+    "subject": "Scheduled task failed",
+    "priority": 8,
+    "status": "PENDING",
+    "createdAt": "2026-08-10T02:00:00Z"
+  }
+}
