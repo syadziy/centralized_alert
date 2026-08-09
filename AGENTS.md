@@ -373,8 +373,9 @@ Never hardcode or commit production passwords, API keys, JWTs, SMTP credentials,
 real customer data. Use environment variables and secret management.
 
 - Keep OAuth2 issuer/JWK configuration externalized.
-- Review `sdk.security.permit-all-paths`; SDK defaults may be broader than this service should use
-  in production.
+- Do not declare or override `sdk.security.permit-all-paths` in this service. The canonical public
+  path policy is owned by `sdk_util`; propose and test changes there because they affect every SDK
+  consumer.
 - Restrict CORS explicitly for production rather than relying on permissive SDK defaults.
 - Validate attachment paths and prevent directory traversal.
 - Do not trust Kafka JSON packages more broadly than required.
