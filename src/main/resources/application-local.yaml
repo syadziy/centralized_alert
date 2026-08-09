@@ -9,3 +9,26 @@ spring:
       quiet-period: 400ms
     livereload:
       enabled: false
+
+# =========================
+# LOCAL SDK OVERRIDES
+# =========================
+sdk:
+  security:
+    enabled: false
+    method-security-enabled: false
+    cors:
+      enabled: false
+
+  # =========================
+  # LOCAL LOGGING OVERRIDES
+  # =========================
+  logging:
+    structured:
+      enabled: true
+      auto-configure-format: false
+
+logging:
+  structured:
+    format:
+      console: ""

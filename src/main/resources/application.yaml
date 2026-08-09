@@ -211,7 +211,7 @@ sdk:
   security:
     enabled: ${SDK_SECURITY_ENABLED:true}
     csrf-disabled: true
-    jwt-issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/audit}
+    jwt-issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/boilerplate}
     session-creation-policy: STATELESS
     permit-all-paths:
       - /actuator/health/**
@@ -226,7 +226,7 @@ sdk:
   openapi:
     enabled: true
     title: Centralized Alert API
-    description: Read-only API for centralized user activity audit records
+    description: Read-only API for centralized alert
     version: 1.0.0
 
 # =========================
@@ -236,7 +236,7 @@ jwt:
   auth:
     converter:
       principle-attribute: preferred_username
-      resource-id: audit-log
+      resource-id: centralized-alert
       
 # =========================
 # MANAGEMENT / ACTUATOR
