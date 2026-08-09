@@ -91,7 +91,7 @@ cd ../centralized_alert
 1. Buat database PostgreSQL:
 
    ```sql
-   CREATE DATABASE central_alert;
+   CREATE DATABASE centralized_alert;
    ```
 
 2. Salin nilai yang diperlukan dari `.env.example` ke environment lokal. Jangan commit file
@@ -291,7 +291,7 @@ baru untuk setiap perubahan schema.
 | Property/environment | Default | Fungsi |
 | --- | --- | --- |
 | `SERVER_PORT` | `9001` | Port HTTP service |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/central_alert` | PostgreSQL connection URL |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/centralized_alert` | PostgreSQL connection URL |
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka brokers |
 | `ALERT_KAFKA_TOPIC` | `centralized-alert.requested` | Dispatch topic |
 | `ALERT_KAFKA_CREATE_TOPIC` | `centralized-alert.create` | Create-alert topic |
