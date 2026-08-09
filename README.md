@@ -385,6 +385,9 @@ ditulis ke log.
 Service dikonfigurasi sebagai OAuth2 resource server. Gunakan bearer token dari `usermanagement`
 untuk endpoint yang dilindungi. Untuk production:
 
+Path `/internal/**` tidak memerlukan JWT. Jangan ekspos path ini melalui public ingress; batasi
+aksesnya dengan network policy atau service mesh karena tidak ada pemeriksaan identity aplikasi.
+
 - Simpan DB, SMTP, Kafka, dan OAuth2 credential pada secret manager/environment.
 - Batasi CORS dan daftar public path dari `sdk-util`.
 - Jangan gunakan default credential dari `.env.example`.
