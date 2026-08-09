@@ -105,16 +105,6 @@ spring:
         retries: 10
 
   # =========================
-  # SECURITY / KEYCLOAK
-  # =========================
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/boilerplate}
-          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8080/realms/boilerplate/protocol/openid-connect/certs}
-
-  # =========================
   # SCHEDULER
   # =========================
   task:
@@ -201,6 +191,54 @@ alert:
       base-directory: ${ATTACHMENT_LOCAL_DIRECTORY:./data/attachments}
 
 # =========================
+# SHARED SDK
+# =========================
+sdk:
+  timezone: ${APP_TIMEZONE:Asia/Jakarta}
+  web:
+    exception-handler:
+      enabled: true
+  logging:
+    structured:
+      enabled: true
+      format: ecs
+      auto-configure-format: true
+      trace-header: X-Correlation-Id
+      trace-response-header: true
+    aspect:
+      enabled: true
+      packages: com.mac.alert.service,com.mac.alert.repository
+  security:
+    enabled: ${SDK_SECURITY_ENABLED:true}
+    csrf-disabled: true
+    jwt-issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/audit}
+    session-creation-policy: STATELESS
+    permit-all-paths:
+      - /actuator/health/**
+      - /actuator/info/**
+      - /v3/api-docs/**
+      - /swagger-ui.html
+      - /swagger-ui/**
+      - /error
+    method-security-enabled: ${SDK_METHOD_SECURITY_ENABLED:true}
+    cors:
+      enabled: ${SDK_CORS_ENABLED:false}
+  openapi:
+    enabled: true
+    title: Centralized Alert API
+    description: Read-only API for centralized user activity audit records
+    version: 1.0.0
+
+# =========================
+# JWT CONVERTER
+# =========================
+jwt:
+  auth:
+    converter:
+      principle-attribute: preferred_username
+      resource-id: audit-log
+      
+# =========================
 # MANAGEMENT / ACTUATOR
 # =========================
 management:
@@ -238,21 +276,6 @@ management:
       probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
 
 # =========================
-# SHARED SDK
-# =========================
-sdk:
-  logging:
-    structured:
-      enabled: true
-      format: ecs
-      auto-configure-format: true
-      trace-header: X-Correlation-Id
-      trace-response-header: true
-    aspect:
-      enabled: true
-      packages: com.mac.alert.service,com.mac.alert.repository
-
-# =========================
 # LOGGING
 # =========================
 logging:
@@ -263,8 +286,6 @@ logging:
     org.springframework.security: ${LOG_LEVEL_SECURITY:INFO}
     org.hibernate.SQL: ${LOG_LEVEL_HIBERNATE_SQL:WARN}
     org.hibernate.orm.jdbc.bind: ${LOG_LEVEL_HIBERNATE_BIND:WARN}
-    org.flywaydb: ${LOG_LEVEL_FLYWAY:DEBUG}
-    org.springframework.boot.autoconfigure.flyway: ${LOG_LEVEL_FLYWAY:DEBUG}
   structured:
     format:
       console: ecs
