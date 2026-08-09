@@ -324,7 +324,7 @@ baru untuk setiap perubahan schema.
 | `alert.processing.retry-max-delay` | `PT30M` | Batas exponential backoff |
 | `MAIL_HOST` / `MAIL_PORT` | `localhost` / `1025` | SMTP server |
 | `ATTACHMENT_LOCAL_DIRECTORY` | `./data/attachments` | Root attachment lokal |
-| `OAUTH2_ISSUER_URI` | local issuer | JWT issuer |
+| `OAUTH2_ISSUER_URI` | `http://localhost:9005` | `usermanagement` JWT issuer |
 
 Durasi menggunakan format ISO-8601, misalnya `PT30S`, `PT1M`, dan `PT10M`. Lihat
 `.env.example` dan `application.yaml` untuk seluruh property.
@@ -344,7 +344,7 @@ ditulis ke log.
 
 ## Security
 
-Service dikonfigurasi sebagai OAuth2 resource server. Gunakan bearer token dari issuer yang sesuai
+Service dikonfigurasi sebagai OAuth2 resource server. Gunakan bearer token dari `usermanagement`
 untuk endpoint yang dilindungi. Untuk production:
 
 - Simpan DB, SMTP, Kafka, dan OAuth2 credential pada secret manager/environment.
