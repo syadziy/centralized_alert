@@ -4,6 +4,9 @@
 dari service lain. Alert dapat dibuat melalui REST API atau Kafka, lalu dikirim secara manual,
 melalui event Kafka, atau otomatis oleh scheduler internal.
 
+JVM, JDBC session, persisted timestamps, logs, dan API timestamps menggunakan UTC secara default
+melalui `APP_TIMEZONE=UTC`.
+
 Service ini dirancang agar proses pengiriman durable, idempotent, aman dijalankan oleh beberapa
 instance, dan mudah dipantau melalui ECS structured logging, trace ID, Actuator, serta Prometheus.
 
@@ -117,6 +120,22 @@ mvn test
 `mvn clean verify` menjalankan unit test, membuat laporan JaCoCo di
 `target/site/jacoco/index.html`, dan menggagalkan build bila line coverage business production code
 kurang dari 90%.
+
+## Docker
+
+Build JAR terlebih dahulu, kemudian jalankan runtime image Java 21. Volume menjaga attachment lokal
+tetap tersedia setelah container diganti:
+
+```bash
+mvn clean package
+docker build -t centralized-alert:1.0.0 .
+docker run --rm --env-file .env -p 9001:9001 \
+  -v centralized_alert_attachments:/app/data/attachments \
+  centralized-alert:1.0.0
+```
+
+Isi `.env` dari `.env.example` dan gunakan hostname service Docker untuk PostgreSQL, Kafka, SMTP,
+serta issuer OAuth2. Untuk object storage, volume attachment lokal dapat dihilangkan.
 
 Dokumentasi JSON untuk seluruh REST API dan Kafka event tersedia di
 `src/main/resources/json/index.json`. File tersebut menjadi indeks menuju contoh request dan

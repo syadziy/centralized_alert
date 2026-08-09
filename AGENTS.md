@@ -142,6 +142,9 @@ Avoid:
 Preserve interruption: when catching `InterruptedException`, call
 `Thread.currentThread().interrupt()` before returning or propagating.
 
+Use UTC for the JVM, JDBC session, persistence, logs, and API timestamps. Convert to a regional
+timezone only at an explicit presentation or business-scheduling boundary.
+
 ---
 
 ## Naming Convention
