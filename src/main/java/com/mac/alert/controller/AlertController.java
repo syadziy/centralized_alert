@@ -13,7 +13,7 @@ import com.mac.alert.entities.mapper.AlertMapper;
 import com.mac.alert.service.AlertDispatchService;
 import com.mac.alert.service.AlertCreateService;
 import com.mac.sdk_util.entities.dto.ResponseDTO;
-import com.mac.sdk_util.utils.ResponseHelper;
+import com.mac.sdk_util.helper.ResponseHelper;
 
 import jakarta.validation.Valid;
 

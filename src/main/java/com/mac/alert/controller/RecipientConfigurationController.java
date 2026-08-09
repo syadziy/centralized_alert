@@ -4,7 +4,8 @@ import com.mac.alert.entities.dto.RecipientConfigurationRequest;
 import com.mac.alert.entities.dto.RecipientConfigurationResponse;
 import com.mac.alert.service.RecipientConfigurationService;
 import com.mac.sdk_util.entities.dto.ResponseDTO;
-import com.mac.sdk_util.utils.ResponseHelper;
+import com.mac.sdk_util.entities.constant.Role;
+import com.mac.sdk_util.helper.ResponseHelper;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -33,7 +34,7 @@ public class RecipientConfigurationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PERM_alert:read-recipients')")
+    @PreAuthorize(Role.ALERT_READ_RECIPIENTS)
     public ResponseEntity<ResponseDTO<List<RecipientConfigurationResponse>>> findAll(
             @RequestParam(required = false) String sourceSystem,
             @RequestParam(defaultValue = "100") int limit,
@@ -42,7 +43,7 @@ public class RecipientConfigurationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('PERM_alert:manage-recipients')")
+    @PreAuthorize(Role.ALERT_MANAGE_RECIPIENTS)
     public ResponseEntity<ResponseDTO<RecipientConfigurationResponse>> create(
             @Valid @RequestBody RecipientConfigurationRequest request) {
         RecipientConfigurationResponse response = service.create(request);
@@ -51,7 +52,7 @@ public class RecipientConfigurationController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_alert:manage-recipients')")
+    @PreAuthorize(Role.ALERT_MANAGE_RECIPIENTS)
     public ResponseEntity<ResponseDTO<RecipientConfigurationResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody RecipientConfigurationRequest request) {
@@ -59,7 +60,7 @@ public class RecipientConfigurationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_alert:manage-recipients')")
+    @PreAuthorize(Role.ALERT_MANAGE_RECIPIENTS)
     public ResponseEntity<ResponseDTO<Map<String, Object>>> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseHelper.httpOK(Map.of("id", id, "deleted", true));
