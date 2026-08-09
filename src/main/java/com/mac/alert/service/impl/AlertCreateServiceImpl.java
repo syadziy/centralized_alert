@@ -12,6 +12,7 @@ import com.mac.alert.entities.model.AlertCreateResult;
 import com.mac.alert.entities.model.CreateAlert;
 import com.mac.alert.repository.AlertRepository;
 import com.mac.alert.service.AlertCreateService;
+import com.mac.alert.service.RecipientConfigurationService;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,13 +22,16 @@ public class AlertCreateServiceImpl
         implements AlertCreateService {
 
     private final AlertRepository alertRepository;
+    private final RecipientConfigurationService recipientConfigurationService;
     private final Clock clock;
 
     public AlertCreateServiceImpl(
             AlertRepository alertRepository,
+            RecipientConfigurationService recipientConfigurationService,
             Clock clock
     ) {
         this.alertRepository = alertRepository;
+        this.recipientConfigurationService = recipientConfigurationService;
         this.clock = clock;
     }
 
@@ -36,6 +40,8 @@ public class AlertCreateServiceImpl
     public AlertCreateResult create(
             CreateAlert model
     ) {
+        model = model.withRecipients(recipientConfigurationService.resolve(
+                model.sourceSystem(), model.recipients()));
         validateBusinessRules(model);
 
         Instant now = clock.instant();

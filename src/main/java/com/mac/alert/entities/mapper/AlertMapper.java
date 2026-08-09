@@ -44,7 +44,9 @@ public class AlertMapper {
                         : Map.copyOf(request.templateVariables());
 
         List<CreateAlert.Recipient> recipients =
-                request.recipients()
+                request.recipients() == null
+                        ? List.of()
+                        : request.recipients()
                         .stream()
                         .map(this::toRecipient)
                         .toList();

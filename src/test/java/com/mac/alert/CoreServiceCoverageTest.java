@@ -61,21 +61,33 @@ class CoreServiceCoverageTest {
         assertEquals(7, withAttachment.priority());
         assertEquals("file.txt", withAttachment.attachments().getFirst().fileName());
         assertEquals("cid", withAttachment.attachments().getFirst().contentId());
+
+        CreateAlert withoutRecipients = mapper.toCommand(
+                new CreateAlertRequest("SOURCE", "key", null, "sender@example.com", null,
+                        null, "subject", "body", AlertBodyType.TEXT, Map.of(), null, null,
+                        null, List.of()),
+                AlertCreatedSource.API, NOW);
+        assertTrue(withoutRecipients.recipients().isEmpty());
     }
 
     @Test
     void createServiceHandlesCreationIdempotencyAndValidation() {
         AlertRepository repository = mock(AlertRepository.class);
-        AlertCreateServiceImpl service = new AlertCreateServiceImpl(repository, Clock.fixed(NOW, ZoneOffset.UTC));
+        RecipientConfigurationService recipientConfigurations = mock(RecipientConfigurationService.class);
+        when(recipientConfigurations.resolve(anyString(), anyList()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
+        AlertCreateServiceImpl service = new AlertCreateServiceImpl(
+                repository, recipientConfigurations, Clock.fixed(NOW, ZoneOffset.UTC));
         CreateAlert valid = command(List.of(new CreateAlert.Recipient(RecipientType.TO, "to@example.com", null)), List.of());
-        when(repository.insertAlertRequest(any(), same(valid), eq(NOW))).thenReturn(true);
+        when(repository.insertAlertRequest(any(), eq(valid), eq(NOW))).thenReturn(true);
         AlertCreateResult created = service.create(valid);
         assertTrue(created.created());
         verify(repository).insertRecipients(created.alertId(), valid.recipients(), NOW);
         verify(repository).insertAttachments(created.alertId(), valid.attachments(), NOW);
+        verify(recipientConfigurations).resolve("SOURCE", valid.recipients());
 
         ExistingAlert existing = new ExistingAlert(UUID.randomUUID(), "SENT", NOW.minusSeconds(10));
-        when(repository.insertAlertRequest(any(), same(valid), eq(NOW))).thenReturn(false);
+        when(repository.insertAlertRequest(any(), eq(valid), eq(NOW))).thenReturn(false);
         when(repository.findExistingAlert("SOURCE", "key")).thenReturn(existing);
         assertEquals(existing.alertId(), service.create(valid).alertId());
 

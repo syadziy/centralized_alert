@@ -1,0 +1,62 @@
+{
+  "name": "Manage alert recipients from dashboard",
+  "baseUrl": "http://localhost:9001/api/v1/alert/recipients",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer <access-token>",
+    "X-Correlation-Id": "recipient-config-001"
+  },
+  "operations": [
+    {
+      "method": "GET",
+      "url": "http://localhost:9001/api/v1/alert/recipients?sourceSystem=PAYMENT-SERVICE&limit=100&offset=0",
+      "requiredPermission": "alert:read-recipients"
+    },
+    {
+      "method": "POST",
+      "url": "http://localhost:9001/api/v1/alert/recipients",
+      "requiredPermission": "alert:manage-recipients",
+      "requestBody": {
+        "sourceSystem": "PAYMENT-SERVICE",
+        "type": "TO",
+        "email": "payment-ops@example.com",
+        "displayName": "Payment Operations",
+        "enabled": true
+      }
+    },
+    {
+      "method": "PUT",
+      "url": "http://localhost:9001/api/v1/alert/recipients/97e95252-e1d4-42f4-89aa-c42b61424923",
+      "requiredPermission": "alert:manage-recipients",
+      "requestBody": {
+        "sourceSystem": "PAYMENT-SERVICE",
+        "type": "TO",
+        "email": "payment-ops@example.com",
+        "displayName": "Payment Operations",
+        "enabled": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "url": "http://localhost:9001/api/v1/alert/recipients/97e95252-e1d4-42f4-89aa-c42b61424923",
+      "requiredPermission": "alert:manage-recipients"
+    }
+  ],
+  "responseData": {
+    "id": "97e95252-e1d4-42f4-89aa-c42b61424923",
+    "sourceSystem": "PAYMENT-SERVICE",
+    "type": "TO",
+    "email": "payment-ops@example.com",
+    "displayName": "Payment Operations",
+    "enabled": true,
+    "createdAt": "2026-08-10T00:00:00Z",
+    "updatedAt": "2026-08-10T00:00:00Z"
+  },
+  "resolutionRules": [
+    "Use sourceSystem '*' for global recipients",
+    "A source-specific row overrides the same global type and email",
+    "Configured rows replace request recipients; only enabled rows become effective",
+    "Request recipients are used only when no global or source-specific row exists",
+    "The effective recipients must contain at least one TO recipient"
+  ]
+}

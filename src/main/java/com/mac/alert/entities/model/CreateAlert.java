@@ -29,6 +29,12 @@ public record CreateAlert(
         List<Attachment> attachments
 ) {
 
+    public CreateAlert withRecipients(List<Recipient> effectiveRecipients) {
+        return new CreateAlert(sourceSystem, idempotencyKey, correlationId, createdSource,
+                senderEmail, senderName, replyToEmail, subject, body, bodyType, templateVariables,
+                priority, scheduledAt, maxRetry, List.copyOf(effectiveRecipients), attachments);
+    }
+
     public record Recipient(
             RecipientType type,
             String email,

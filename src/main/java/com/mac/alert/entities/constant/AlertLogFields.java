@@ -11,6 +11,10 @@ public final class AlertLogFields {
     public static final String ALERT_PARALLELISM = "alert.parallelism";
     public static final String ALERT_PROCESSED_COUNT = "alert.processed_count";
     public static final String ALERT_STATUS = "alert.status";
+    public static final String RECIPIENT_CONFIGURATION_ID = "alert.recipient_configuration.id";
+    public static final String RECIPIENT_CONFIGURATION_SOURCE = "alert.recipient_configuration.source";
+    public static final String RECIPIENT_CONFIGURATION_TYPE = "alert.recipient_configuration.type";
+    public static final String RECIPIENT_CONFIGURATION_ENABLED = "alert.recipient_configuration.enabled";
     public static final String ASYNC_SOURCE = "async.source";
     public static final String EVENT_ID = "event.id";
     public static final String KAFKA_MESSAGE_KEY = "kafka.message.key";

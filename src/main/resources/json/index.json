@@ -11,6 +11,11 @@
       "method": "POST",
       "path": "/api/v1/alert/{alertId}/dispatch",
       "example": "api-dispatch-alert.json"
+    },
+    {
+      "method": "GET|POST|PUT|DELETE",
+      "path": "/api/v1/alert/recipients",
+      "example": "api-recipient-configuration.json"
     }
   ],
   "kafkaEvents": [

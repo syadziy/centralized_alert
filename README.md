@@ -15,6 +15,7 @@ instance, dan mudah dipantau melalui ECS structured logging, trace ID, Actuator,
 - Pembuatan alert melalui REST API dan Kafka.
 - Idempotency berdasarkan pasangan `sourceSystem` dan `idempotencyKey`.
 - Recipient `TO`, `CC`, dan `BCC` dengan validasi email dan duplikasi.
+- Konfigurasi recipient global atau per `sourceSystem` yang dapat dikelola dashboard.
 - Email body `TEXT` atau `HTML` dengan Thymeleaf template variables.
 - Penjadwalan pengiriman menggunakan `scheduledAt`.
 - Attachment metadata dengan storage `LOCAL`, `S3`, atau `MINIO`.
@@ -147,6 +148,42 @@ Semua response REST menggunakan envelope dari `sdk-util`. Client dapat mengirim
 `X-Correlation-Id`; jika tidak tersedia, SDK membuat trace ID dan mengembalikannya melalui header
 response.
 
+### Mengelola penerima dari dashboard
+
+Dashboard dapat memakai endpoint berikut:
+
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `GET` | `/api/v1/alert/recipients?sourceSystem=PAYMENT-SERVICE&limit=100&offset=0` | `alert:read-recipients` |
+| `POST` | `/api/v1/alert/recipients` | `alert:manage-recipients` |
+| `PUT` | `/api/v1/alert/recipients/{id}` | `alert:manage-recipients` |
+| `DELETE` | `/api/v1/alert/recipients/{id}` | `alert:manage-recipients` |
+
+Contoh membuat penerima khusus `PAYMENT-SERVICE`:
+
+```bash
+curl --request POST 'http://localhost:9001/api/v1/alert/recipients' \
+  --header 'Authorization: Bearer <access-token>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "sourceSystem": "PAYMENT-SERVICE",
+    "type": "TO",
+    "email": "payment-ops@example.com",
+    "displayName": "Payment Operations",
+    "enabled": true
+  }'
+```
+
+Gunakan `sourceSystem: "*"` (atau kosong) untuk konfigurasi global. Saat alert dibuat, konfigurasi
+aktif untuk `sourceSystem` tersebut dan konfigurasi global digabung serta dideduplikasi berdasarkan
+`type + email`; konfigurasi khusus source menang atas konfigurasi global yang sama, termasuk ketika
+konfigurasi khusus dinonaktifkan. Jika minimal satu baris konfigurasi berlaku untuk source tersebut,
+seluruh `recipients` pada request alert digantikan oleh penerima aktif hasil konfigurasi. Jika tidak
+ada baris konfigurasi global maupun khusus, `recipients` request digunakan sebagai fallback agar
+integrasi lama tetap kompatibel. Menonaktifkan seluruh konfigurasi akan membuat alert ditolak karena
+tidak memiliki penerima `TO`, bukan kembali ke payload request.
+Hasil akhirnya tetap wajib memiliki minimal satu penerima `TO`.
+
 ### Membuat alert
 
 `POST /api/v1/alert`
@@ -186,7 +223,7 @@ Aturan penting:
 - `sourceSystem` dan `idempotencyKey` wajib dan membentuk idempotency key unik.
 - Request pertama menghasilkan HTTP `201`; request duplikat mengembalikan data alert yang sudah
   ada dengan HTTP `200` tanpa membuat recipient atau attachment baru.
-- Minimal satu recipient bertipe `TO` wajib tersedia.
+- Minimal satu recipient bertipe `TO` wajib tersedia dari konfigurasi dashboard atau request fallback.
 - Kombinasi tipe dan email recipient tidak boleh duplikat.
 - `priority` berada pada rentang `1`–`9`; `1` adalah prioritas tertinggi.
 - Jika `priority` kosong, nilai `alert.create.default-priority` digunakan.
@@ -297,7 +334,8 @@ Enum `S3` dan `MINIO` sudah menjadi bagian kontrak data, tetapi memerlukan imple
 Flyway mengelola tabel berikut:
 
 - `alert_request`: lifecycle, idempotency, schedule, retry, dan worker lease.
-- `alert_recipient`: recipient `TO`, `CC`, dan `BCC`.
+- `alert_recipient`: snapshot recipient `TO`, `CC`, dan `BCC` untuk setiap alert.
+- `alert_recipient_configuration`: konfigurasi penerima global/per source yang dikelola dashboard.
 - `alert_attachment`: metadata attachment.
 - `alert_delivery_history`: immutable history untuk setiap delivery attempt.
 
