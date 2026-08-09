@@ -1,5 +1,5 @@
 {
-  "endpoint": "ws://localhost:9001/ws/alerts",
+  "endpoint": "ws://localhost:9003/ws/alerts",
   "protocol": "STOMP 1.2",
   "connectHeaders": {
     "Authorization": "Bearer <access-token-with-alert:read-notifications>"

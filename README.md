@@ -146,7 +146,7 @@ response setiap contract.
 
 ## Realtime WebSocket notification
 
-Dashboard terhubung ke endpoint STOMP `ws://localhost:9001/ws/alerts` melalui API Gateway dan
+Dashboard terhubung ke endpoint STOMP `ws://localhost:9003/ws/alerts` melalui API Gateway dan
 subscribe ke destination `/topic/alerts`. Browser mengirim bearer token pada STOMP frame `CONNECT`,
 bukan query string. Token wajib memiliki permission `alert:read-notifications`.
 
