@@ -171,6 +171,8 @@ Controllers must:
 - Validate and deserialize input.
 - Delegate business decisions to services.
 - Return `ResponseDTO` through `ResponseHelper`.
+- Put `@PreAuthorize` with `PERM_<resource>:<action>` on protected endpoint methods. Service
+  implementations must not carry HTTP endpoint authorization annotations.
 - Remain free of persistence, SMTP, Kafka, and retry logic.
 
 Services own business orchestration. Repository implementations own SQL and result mapping.
