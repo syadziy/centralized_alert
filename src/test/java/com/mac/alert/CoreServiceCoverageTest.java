@@ -86,7 +86,7 @@ class CoreServiceCoverageTest {
         assertTrue(created.created());
         verify(repository).insertRecipients(created.alertId(), valid.recipients(), NOW);
         verify(repository).insertAttachments(created.alertId(), valid.attachments(), NOW);
-        verify(eventPublisher).publishEvent(argThat(event -> event instanceof AlertWebNotification notification
+        verify(eventPublisher).publishEvent(argThat((Object event) -> event instanceof AlertWebNotification notification
                 && notification.alertId().equals(created.alertId())
                 && notification.subject().equals(valid.subject())));
         verify(recipientConfigurations).resolve("SOURCE", valid.recipients());
@@ -95,7 +95,7 @@ class CoreServiceCoverageTest {
         when(repository.insertAlertRequest(any(), eq(valid), eq(NOW))).thenReturn(false);
         when(repository.findExistingAlert("SOURCE", "key")).thenReturn(existing);
         assertEquals(existing.alertId(), service.create(valid).alertId());
-        verify(eventPublisher, times(1)).publishEvent(any());
+        verify(eventPublisher, times(1)).publishEvent(any(Object.class));
 
         assertThrows(IllegalArgumentException.class,
                 () -> service.create(command(List.of(new CreateAlert.Recipient(RecipientType.CC, "cc@example.com", null)), List.of())));
