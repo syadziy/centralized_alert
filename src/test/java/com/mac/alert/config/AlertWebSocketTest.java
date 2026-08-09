@@ -35,14 +35,15 @@ class AlertWebSocketTest {
     @Test
     void authenticatesStompConnectAndRequiresNotificationPermission() {
         JwtDecoder decoder = mock(JwtDecoder.class);
-        JwtAuthConverter converter = new JwtAuthConverter(new JwtAuthConverterProperties());
+        JwtAuthConverterProperties converterProperties = new JwtAuthConverterProperties();
+        converterProperties.setPrincipleAttribute("username");
+        JwtAuthConverter converter = new JwtAuthConverter(converterProperties);
         AlertWebSocketAuthenticationInterceptor interceptor = new AlertWebSocketAuthenticationInterceptor(
                 provider(decoder), provider(converter), true);
         when(decoder.decode("valid")).thenReturn(jwt(List.of("alert:read-notifications")));
         when(decoder.decode("denied")).thenReturn(jwt(List.of("alert:write")));
 
-        Message<byte[]> authorized = connect("Bearer valid");
-        interceptor.preSend(authorized, mock(MessageChannel.class));
+        Message<?> authorized = interceptor.preSend(connect("Bearer valid"), mock(MessageChannel.class));
         assertEquals("operator", StompHeaderAccessor.wrap(authorized).getUser().getName());
 
         assertThrows(AccessDeniedException.class,
@@ -55,8 +56,7 @@ class AlertWebSocketTest {
     void permitsLocalConnectWhenSdkSecurityIsDisabled() {
         AlertWebSocketAuthenticationInterceptor interceptor = new AlertWebSocketAuthenticationInterceptor(
                 provider(null), provider(null), false);
-        Message<byte[]> message = connect(null);
-        interceptor.preSend(message, mock(MessageChannel.class));
+        Message<?> message = interceptor.preSend(connect(null), mock(MessageChannel.class));
         assertEquals("local-websocket", StompHeaderAccessor.wrap(message).getUser().getName());
     }
 

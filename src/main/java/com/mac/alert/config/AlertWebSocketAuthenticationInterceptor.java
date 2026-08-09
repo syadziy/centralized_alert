@@ -10,6 +10,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -49,10 +50,14 @@ public class AlertWebSocketAuthenticationInterceptor implements ChannelIntercept
         if (accessor.getCommand() != StompCommand.CONNECT) {
             return message;
         }
+        boolean rebuildMessage = !accessor.isMutable();
+        if (rebuildMessage) {
+            accessor = StompHeaderAccessor.wrap(message);
+        }
         if (!securityEnabled) {
             accessor.setUser(new UsernamePasswordAuthenticationToken(
                     "local-websocket", "", List.of(new SimpleGrantedAuthority(REQUIRED_AUTHORITY))));
-            return message;
+            return result(message, accessor, rebuildMessage);
         }
 
         String authorization = accessor.getFirstNativeHeader("Authorization");
@@ -68,9 +73,18 @@ public class AlertWebSocketAuthenticationInterceptor implements ChannelIntercept
                 throw new AccessDeniedException("Alert notification permission is required");
             }
             accessor.setUser(authentication);
-            return message;
+            return result(message, accessor, rebuildMessage);
         } catch (JwtException exception) {
             throw new BadCredentialsException("WebSocket bearer token is invalid", exception);
         }
+    }
+
+    private Message<?> result(
+            Message<?> original,
+            StompHeaderAccessor accessor,
+            boolean rebuildMessage) {
+        return rebuildMessage
+                ? MessageBuilder.createMessage(original.getPayload(), accessor.getMessageHeaders())
+                : original;
     }
 }
