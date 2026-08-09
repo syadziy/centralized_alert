@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import com.mac.alert.entities.constant.AttachmentDisposition;
 import com.mac.alert.entities.constant.RecipientType;
+import com.mac.alert.entities.dto.AlertWebNotification;
 import com.mac.alert.entities.model.AlertCreateResult;
 import com.mac.alert.entities.model.CreateAlert;
 import com.mac.alert.repository.AlertRepository;
@@ -15,6 +16,7 @@ import com.mac.alert.service.AlertCreateService;
 import com.mac.alert.service.RecipientConfigurationService;
 
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -24,15 +26,18 @@ public class AlertCreateServiceImpl
     private final AlertRepository alertRepository;
     private final RecipientConfigurationService recipientConfigurationService;
     private final Clock clock;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AlertCreateServiceImpl(
             AlertRepository alertRepository,
             RecipientConfigurationService recipientConfigurationService,
-            Clock clock
+            Clock clock,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.alertRepository = alertRepository;
         this.recipientConfigurationService = recipientConfigurationService;
         this.clock = clock;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -84,6 +89,15 @@ public class AlertCreateServiceImpl
                 model.attachments(),
                 now
         );
+
+        eventPublisher.publishEvent(new AlertWebNotification(
+                newAlertId,
+                "ALERT_CREATED",
+                model.sourceSystem(),
+                model.subject(),
+                model.priority(),
+                "PENDING",
+                now));
 
         return new AlertCreateResult(
                 newAlertId,

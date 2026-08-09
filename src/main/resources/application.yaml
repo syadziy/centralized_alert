@@ -190,6 +190,10 @@ alert:
     max-total-size: ${ALERT_ATTACHMENT_MAX_TOTAL_SIZE:25MB}
     local:
       base-directory: ${ATTACHMENT_LOCAL_DIRECTORY:./data/attachments}
+  websocket:
+    enabled: ${ALERT_WEBSOCKET_ENABLED:true}
+    allowed-origins: ${ALERT_WEBSOCKET_ALLOWED_ORIGINS:http://localhost:5173}
+    destination: /topic/alerts
 
 # =========================
 # SHARED SDK
