@@ -18,7 +18,7 @@ public class DeliveryHistoryRepositoryImpl implements DeliveryHistoryRepository 
 
     @Override
     public List<DeliveryHistoryResponse> findAll(String result, int limit, int offset) {
-        return jdbcTemplate.query("""
+        StringBuilder sql = new StringBuilder("""
                 SELECT h.id, h.alert_id, a.source_system, a.subject,
                        COALESCE(string_agg(r.recipient_type || ': ' || r.email, ', '
                            ORDER BY r.recipient_type, r.email), '') AS recipients,
@@ -28,14 +28,20 @@ public class DeliveryHistoryRepositoryImpl implements DeliveryHistoryRepository 
                 FROM alert_delivery_history h
                 JOIN alert_request a ON a.id = h.alert_id
                 LEFT JOIN alert_recipient r ON r.alert_id = h.alert_id
-                WHERE (:result IS NULL OR h.result = :result)
+                """);
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("limit", limit)
+                .addValue("offset", offset);
+        if (result != null) {
+            sql.append(" WHERE h.result = :result");
+            parameters.addValue("result", result);
+        }
+        sql.append("""
                 GROUP BY h.id, a.id
                 ORDER BY h.completed_at DESC, h.id
                 LIMIT :limit OFFSET :offset
-                """, new MapSqlParameterSource()
-                        .addValue("result", result)
-                        .addValue("limit", limit)
-                        .addValue("offset", offset),
+                """);
+        return jdbcTemplate.query(sql.toString(), parameters,
                 (rs, rowNum) -> new DeliveryHistoryResponse(
                         rs.getObject("id", java.util.UUID.class),
                         rs.getObject("alert_id", java.util.UUID.class),

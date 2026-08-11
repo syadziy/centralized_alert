@@ -43,6 +43,7 @@ class RecipientConfigurationRepositoryImplTest {
                 .thenAnswer(invocation -> List.of(map(invocation.getArgument(2), id)));
         assertTrue(repository.findById(id).isPresent());
         assertEquals(1, repository.findAll("PAYMENT", 10, 0).size());
+        assertEquals(1, repository.findAll(null, 10, 0).size());
         assertEquals(1, repository.findResolvedForSource("PAYMENT").size());
 
         when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class)))

@@ -37,12 +37,8 @@ public class RecipientConfigurationRepositoryImpl implements RecipientConfigurat
             WHERE source_system = :sourceSystem AND recipient_type = :recipientType AND email = :email
               AND (:excludedId IS NULL OR id <> :excludedId)
             """;
-    private static final String FIND_ALL_SQL = "SELECT " + COLUMNS + """
-             FROM alert_recipient_configuration
-             WHERE (:sourceSystem IS NULL OR source_system = :sourceSystem)
-             ORDER BY source_system, recipient_type, email
-             LIMIT :limit OFFSET :offset
-            """;
+    private static final String FIND_ALL_SQL = "SELECT " + COLUMNS
+            + " FROM alert_recipient_configuration";
     private static final String FIND_RESOLVED_SQL = "SELECT DISTINCT ON (recipient_type, email) "
             + COLUMNS + """
              FROM alert_recipient_configuration
@@ -92,10 +88,15 @@ public class RecipientConfigurationRepositoryImpl implements RecipientConfigurat
     @Override
     public List<RecipientConfiguration> findAll(String sourceSystem, int limit, int offset) {
         MapSqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("sourceSystem", sourceSystem)
                 .addValue("limit", limit)
                 .addValue("offset", offset);
-        return jdbcTemplate.query(FIND_ALL_SQL, parameters, this::map);
+        StringBuilder sql = new StringBuilder(FIND_ALL_SQL);
+        if (sourceSystem != null) {
+            sql.append(" WHERE source_system = :sourceSystem");
+            parameters.addValue("sourceSystem", sourceSystem);
+        }
+        sql.append(" ORDER BY source_system, recipient_type, email LIMIT :limit OFFSET :offset");
+        return jdbcTemplate.query(sql.toString(), parameters, this::map);
     }
 
     @Override
