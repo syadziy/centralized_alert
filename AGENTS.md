@@ -194,6 +194,10 @@ Configuration rules:
   virtual-thread executor.
 - Publish sanitized realtime events only after a new alert transaction commits. Duplicate
   idempotency requests must not emit another notification.
+- STOMP authentication accepts either a validated HTTP handshake principal relayed by API Gateway
+  from the HttpOnly auth cookie or a Bearer token on the `CONNECT` frame for non-browser clients.
+  Both paths must enforce `PERM_alert:read-notifications`; never expose the cookie token to browser
+  JavaScript merely to populate STOMP headers.
 - Do not duplicate SDK auto-configuration in `com.mac.alert`.
 - Keep scheduler and Kafka feature switches conditional on their existing properties.
 

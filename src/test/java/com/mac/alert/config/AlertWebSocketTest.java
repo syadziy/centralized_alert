@@ -25,6 +25,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 
@@ -58,6 +60,20 @@ class AlertWebSocketTest {
                 provider(null), provider(null), false);
         Message<?> message = interceptor.preSend(connect(null), mock(MessageChannel.class));
         assertEquals("local-websocket", StompHeaderAccessor.wrap(message).getUser().getName());
+    }
+
+    @Test
+    void acceptsAuthenticatedHttpHandshakePrincipalFromGatewayCookieRelay() {
+        AlertWebSocketAuthenticationInterceptor interceptor = new AlertWebSocketAuthenticationInterceptor(
+                provider(null), provider(null), true);
+        StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.CONNECT);
+        accessor.setUser(new UsernamePasswordAuthenticationToken("cookie-owner", "",
+                List.of(new SimpleGrantedAuthority("PERM_alert:read-notifications"))));
+        Message<byte[]> connect = MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
+
+        Message<?> authorized = interceptor.preSend(connect, mock(MessageChannel.class));
+
+        assertEquals("cookie-owner", StompHeaderAccessor.wrap(authorized).getUser().getName());
     }
 
     @Test

@@ -1,7 +1,8 @@
 {
   "endpoint": "ws://localhost:9003/ws/alerts",
   "protocol": "STOMP 1.2",
-  "connectHeaders": {
+  "browserAuthentication": "HttpOnly ACCESS_TOKEN cookie on the API Gateway handshake",
+  "nonBrowserConnectHeaders": {
     "Authorization": "Bearer <access-token-with-alert:read-notifications>"
   },
   "subscription": "/topic/alerts",

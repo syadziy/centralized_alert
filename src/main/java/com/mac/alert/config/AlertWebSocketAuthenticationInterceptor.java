@@ -60,6 +60,12 @@ public class AlertWebSocketAuthenticationInterceptor implements ChannelIntercept
             return result(message, accessor, rebuildMessage);
         }
 
+        if (accessor.getUser() instanceof Authentication handshakeAuthentication
+                && handshakeAuthentication.isAuthenticated()) {
+            requireNotificationPermission(handshakeAuthentication);
+            return result(message, accessor, rebuildMessage);
+        }
+
         String authorization = accessor.getFirstNativeHeader("Authorization");
         if (!StringUtils.hasText(authorization) || !authorization.startsWith(BEARER_PREFIX)) {
             throw new BadCredentialsException("WebSocket bearer token is required");
@@ -68,14 +74,18 @@ public class AlertWebSocketAuthenticationInterceptor implements ChannelIntercept
         try {
             Authentication authentication = jwtAuthConverter.getObject().convert(
                     jwtDecoder.getObject().decode(authorization.substring(BEARER_PREFIX.length())));
-            if (authentication == null || authentication.getAuthorities().stream()
-                    .noneMatch(authority -> REQUIRED_AUTHORITY.equals(authority.getAuthority()))) {
-                throw new AccessDeniedException("Alert notification permission is required");
-            }
+            requireNotificationPermission(authentication);
             accessor.setUser(authentication);
             return result(message, accessor, rebuildMessage);
         } catch (JwtException exception) {
             throw new BadCredentialsException("WebSocket bearer token is invalid", exception);
+        }
+    }
+
+    private static void requireNotificationPermission(Authentication authentication) {
+        if (authentication == null || authentication.getAuthorities().stream()
+                .noneMatch(authority -> REQUIRED_AUTHORITY.equals(authority.getAuthority()))) {
+            throw new AccessDeniedException("Alert notification permission is required");
         }
     }
 

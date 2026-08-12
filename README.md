@@ -147,8 +147,10 @@ response setiap contract.
 ## Realtime WebSocket notification
 
 Dashboard terhubung ke endpoint STOMP `ws://localhost:9003/ws/alerts` melalui API Gateway dan
-subscribe ke destination `/topic/alerts`. Browser mengirim bearer token pada STOMP frame `CONNECT`,
-bukan query string. Token wajib memiliki permission `alert:read-notifications`.
+subscribe ke destination `/topic/alerts`. Browser mengirim cookie `ACCESS_TOKEN` yang `HttpOnly`
+pada handshake; API Gateway memvalidasi dan me-relay token sehingga JavaScript tidak perlu membaca
+JWT. Non-browser client tetap dapat mengirim bearer token pada STOMP frame `CONNECT`, bukan query
+string. Kedua alur wajib memiliki permission `alert:read-notifications`.
 
 Notifikasi hanya diterbitkan untuk alert baru setelah transaksi database commit. Request dengan
 idempotency key yang sudah tersimpan tidak menghasilkan notifikasi kedua. Payload sengaja tidak
