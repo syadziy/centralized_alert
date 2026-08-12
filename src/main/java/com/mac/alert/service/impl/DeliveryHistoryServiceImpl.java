@@ -17,12 +17,21 @@ public class DeliveryHistoryServiceImpl implements DeliveryHistoryService {
 
     @Override
     public List<DeliveryHistoryResponse> findAll(String result, int limit, int offset) {
-        if (limit < 1 || limit > 200) throw new IllegalArgumentException("limit must be between 1 and 200");
+        if (limit < 1 || limit > 500) throw new IllegalArgumentException("limit must be between 1 and 500");
         if (offset < 0) throw new IllegalArgumentException("offset must not be negative");
+        return repository.findAll(normalizeResult(result), limit, offset);
+    }
+
+    @Override
+    public long count(String result) {
+        return repository.count(normalizeResult(result));
+    }
+
+    private static String normalizeResult(String result) {
         String normalized = result == null || result.isBlank() ? null : result.trim().toUpperCase(Locale.ROOT);
         if (normalized != null && !normalized.equals("SUCCESS") && !normalized.equals("FAILED")) {
             throw new IllegalArgumentException("result must be SUCCESS or FAILED");
         }
-        return repository.findAll(normalized, limit, offset);
+        return normalized;
     }
 }

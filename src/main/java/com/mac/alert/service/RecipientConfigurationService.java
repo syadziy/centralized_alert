@@ -16,6 +16,8 @@ public interface RecipientConfigurationService {
 
     List<RecipientConfigurationResponse> findAll(String sourceSystem, int limit, int offset);
 
+    long count(String sourceSystem);
+
     List<CreateAlert.Recipient> resolve(
             String sourceSystem, List<CreateAlert.Recipient> requestRecipients);
 }

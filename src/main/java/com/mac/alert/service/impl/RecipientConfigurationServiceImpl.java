@@ -84,8 +84,8 @@ public class RecipientConfigurationServiceImpl implements RecipientConfiguration
     @Override
     @Transactional(readOnly = true)
     public List<RecipientConfigurationResponse> findAll(String sourceSystem, int limit, int offset) {
-        if (limit < 1 || limit > 200) {
-            throw new IllegalArgumentException("limit must be between 1 and 200");
+        if (limit < 1 || limit > 500) {
+            throw new IllegalArgumentException("limit must be between 1 and 500");
         }
         if (offset < 0) {
             throw new IllegalArgumentException("offset must be non-negative");
@@ -96,6 +96,15 @@ public class RecipientConfigurationServiceImpl implements RecipientConfiguration
         return repository.findAll(normalizedSource, limit, offset).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long count(String sourceSystem) {
+        String normalizedSource = sourceSystem == null || sourceSystem.isBlank()
+                ? null
+                : normalizeSourceSystem(sourceSystem);
+        return repository.count(normalizedSource);
     }
 
     @Override

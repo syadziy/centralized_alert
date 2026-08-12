@@ -365,7 +365,9 @@ Preserve existing routes and response envelopes unless an API version change is 
 
 ## Performance
 
-- Keep list/database operations bounded and paginated where applicable.
+- Every list endpoint must accept validated `limit` and `offset`, use stable SQL ordering with
+  `LIMIT/OFFSET`, and return `paging.limit`, `paging.offset`, and `paging.total_record` from a
+  matching unpaginated `COUNT`. Never derive the total from the current page size.
 - Preserve `batch-size`, processing timeout, and maximum parallelism controls.
 - Use the configured virtual-thread executor; do not create one executor per request or alert.
 - Avoid holding a database transaction open during SMTP or filesystem I/O.

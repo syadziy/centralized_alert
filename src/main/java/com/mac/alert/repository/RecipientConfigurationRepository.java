@@ -20,5 +20,7 @@ public interface RecipientConfigurationRepository {
 
     List<RecipientConfiguration> findAll(String sourceSystem, int limit, int offset);
 
+    long count(String sourceSystem);
+
     List<RecipientConfiguration> findResolvedForSource(String sourceSystem);
 }

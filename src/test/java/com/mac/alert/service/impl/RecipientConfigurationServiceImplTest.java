@@ -107,7 +107,9 @@ class RecipientConfigurationServiceImplTest {
         service.findAll(null, 200, 0);
         verify(repository).findAll(null, 200, 0);
         assertThrows(IllegalArgumentException.class, () -> service.findAll(null, 0, 0));
-        assertThrows(IllegalArgumentException.class, () -> service.findAll(null, 201, 0));
+        service.findAll(null, 500, 0);
+        verify(repository).findAll(null, 500, 0);
+        assertThrows(IllegalArgumentException.class, () -> service.findAll(null, 501, 0));
         assertThrows(IllegalArgumentException.class, () -> service.findAll(null, 10, -1));
     }
 

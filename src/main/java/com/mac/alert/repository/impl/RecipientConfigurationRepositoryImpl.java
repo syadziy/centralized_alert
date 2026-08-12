@@ -100,6 +100,18 @@ public class RecipientConfigurationRepositoryImpl implements RecipientConfigurat
     }
 
     @Override
+    public long count(String sourceSystem) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        String sql = "SELECT COUNT(*) FROM alert_recipient_configuration";
+        if (sourceSystem != null) {
+            sql += " WHERE source_system = :sourceSystem";
+            parameters.addValue("sourceSystem", sourceSystem);
+        }
+        Long total = jdbcTemplate.queryForObject(sql, parameters, Long.class);
+        return total == null ? 0 : total;
+    }
+
+    @Override
     public List<RecipientConfiguration> findResolvedForSource(String sourceSystem) {
         return jdbcTemplate.query(FIND_RESOLVED_SQL, Map.of("sourceSystem", sourceSystem), this::map);
     }

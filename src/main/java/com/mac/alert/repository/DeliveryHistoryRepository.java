@@ -5,4 +5,6 @@ import java.util.List;
 
 public interface DeliveryHistoryRepository {
     List<DeliveryHistoryResponse> findAll(String result, int limit, int offset);
+
+    long count(String result);
 }

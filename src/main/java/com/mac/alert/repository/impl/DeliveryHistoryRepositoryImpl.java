@@ -55,4 +55,16 @@ public class DeliveryHistoryRepositoryImpl implements DeliveryHistoryRepository 
                         rs.getTimestamp("completed_at").toInstant(), rs.getLong("duration_ms"),
                         rs.getTimestamp("next_retry_at") == null ? null : rs.getTimestamp("next_retry_at").toInstant()));
     }
+
+    @Override
+    public long count(String result) {
+        String sql = "SELECT COUNT(*) FROM alert_delivery_history";
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        if (result != null) {
+            sql += " WHERE result = :result";
+            parameters.addValue("result", result);
+        }
+        Long total = jdbcTemplate.queryForObject(sql, parameters, Long.class);
+        return total == null ? 0 : total;
+    }
 }
